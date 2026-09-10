@@ -1,57 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Quantum Tunneling Simulator</title>
-<style>
-:root{--bg:#f6f8fb;--panel:#fff;--text:#18212f;--muted:#667085;--border:#d9e1ea;--accent:#2563eb;--green:#0f9d68;--purple:#8b5cf6}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI","Noto Sans TC",sans-serif;line-height:1.5}.page{width:min(1180px,calc(100% - 28px));margin:auto;padding:28px 0 52px}header{margin-bottom:22px}.eyebrow{color:var(--accent);font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}h1{margin:6px 0 8px;font-size:clamp(2rem,5vw,3.4rem);line-height:1.05}.subtitle{margin:0;max-width:850px;color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(280px,350px) minmax(0,1fr);gap:18px;align-items:start}.stack{display:grid;gap:18px}.card{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 10px 28px rgba(20,33,61,.08);min-width:0}.card h2,.card h3{margin-top:0}.control{margin-bottom:18px}.control:last-child{margin-bottom:0}.control-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;margin-bottom:7px}.control label{font-weight:750}.control output{color:var(--accent);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}input[type=range]{width:100%;accent-color:var(--accent)}.hint{color:var(--muted);font-size:.86rem;margin-top:5px}.metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.metric{border:1px solid var(--border);border-radius:14px;padding:12px}.metric .label{color:var(--muted);font-size:.82rem}.metric .value{margin-top:3px;font-weight:850;font-size:1.08rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.status{margin-top:12px;padding:12px 14px;border-radius:14px;font-weight:750;background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.18)}.equation{margin-top:12px;padding:12px;border-radius:12px;background:#f8fafc;border:1px solid #e8edf3;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.theory{color:var(--muted);font-size:.94rem}.theory strong{color:var(--text)}.canvas-wrap{width:100%;overflow:hidden}canvas{display:block;width:100%;border-radius:13px;background:#fff}#mainPlot{height:360px}#probPlot{height:290px}.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:10px;color:var(--muted);font-size:.84rem}.legend span:before{content:"";display:inline-block;width:11px;height:3px;margin-right:6px;vertical-align:middle;border-radius:999px;background:currentColor}.legend .pot{color:#667085}.legend .wf{color:#2563eb}.legend .energy{color:#8b5cf6}.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}.compare-box{border:1px solid var(--border);border-radius:14px;padding:12px}.compare-box strong{display:block;margin-bottom:3px}.meter{margin-top:9px;height:10px;border-radius:999px;overflow:hidden;background:#eef2f6}.meter-fill{height:100%;width:0;background:var(--accent);transition:width .18s ease}footer{text-align:center;color:var(--muted);font-size:.82rem;margin-top:18px}@media(max-width:860px){.grid{grid-template-columns:1fr}}@media(max-width:560px){.page{width:min(100% - 18px,1180px)}.card{padding:14px}.metrics,.compare{grid-template-columns:1fr}#mainPlot{height:320px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Tunneling Animation</title>
+    <!-- Include Plotly.js for rendering -->
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 950px; margin: 0 auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #2c3e50; }
+        .controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; padding: 15px; background: #eef2f5; border-radius: 8px; }
+        .control-group { display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
+        input[type=range] { width: 65%; cursor: pointer; }
+        .stats { text-align: center; font-size: 1.1em; margin-bottom: 10px; }
+        #probability-display { font-weight: bold; color: #e74c3c; font-size: 1.3em; }
+        #plot { width: 100%; height: 500px; }
+    </style>
 </head>
 <body>
-<main class="page">
-<header><div class="eyebrow">Introduction to Semiconductor · Interactive Prototype</div><h1>Quantum Tunneling Explorer</h1><p class="subtitle">Explore how barrier height and barrier thickness control wavefunction decay and electron tunneling probability.</p></header>
-<section class="grid">
-<div class="stack">
-<article class="card"><h2>Controls</h2>
-<div class="control"><div class="control-head"><label for="energy">Electron energy E</label><output id="energyOut">1.00 eV</output></div><input id="energy" type="range" min="0.10" max="4.50" step="0.05" value="1.00"><div class="hint">Keep E below the barrier to observe tunneling.</div></div>
-<div class="control"><div class="control-head"><label for="height">Barrier height V₀</label><output id="heightOut">3.00 eV</output></div><input id="height" type="range" min="0.50" max="6.00" step="0.05" value="3.00"><div class="hint">A taller barrier makes the wavefunction decay faster.</div></div>
-<div class="control"><div class="control-head"><label for="width">Barrier thickness a</label><output id="widthOut">1.00 nm</output></div><input id="width" type="range" min="0.10" max="3.00" step="0.05" value="1.00"><div class="hint">A thicker barrier strongly suppresses transmission.</div></div>
-</article>
-<article class="card"><h2>Calculated quantities</h2><div class="metrics">
-<div class="metric"><div class="label">Energy difference V₀ − E</div><div id="deltaE" class="value"></div></div>
-<div class="metric"><div class="label">Decay constant κ</div><div id="kappa" class="value"></div></div>
-<div class="metric"><div class="label">Approx. transmission T</div><div id="transmission" class="value"></div></div>
-<div class="metric"><div class="label">Transmission percent</div><div id="transmissionPercent" class="value"></div></div>
-</div><div id="status" class="status" aria-live="polite"></div><div id="formula" class="equation"></div></article>
-<article class="card theory"><h3>Physical picture</h3><p>Classically, an electron with <strong>E &lt; V₀</strong> cannot cross the barrier. Quantum mechanically, its wavefunction penetrates the barrier and decays exponentially.</p><p>For a rectangular barrier, <strong>κ = √(2m(V₀−E))/ħ</strong>, and the prototype uses the qualitative approximation <strong>T ≈ exp(−2κa)</strong>.</p></article>
+
+<div class="container">
+    <h2>Quantum Tunneling Visualization</h2>
+    <p style="text-align: center;">Interactive animation showing the real and imaginary parts of an electron's wavefunction.</p>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label for="energy">Electron Energy (E): <span id="val-energy">5.0</span> eV</label>
+            <input type="range" id="energy" min="1" max="9.9" step="0.1" value="5">
+        </div>
+        <div class="control-group">
+            <label for="height">Barrier Height (V₀): <span id="val-height">10.0</span> eV</label>
+            <input type="range" id="height" min="2" max="20" step="0.5" value="10">
+        </div>
+        <div class="control-group">
+            <label for="thickness">Barrier Width (L): <span id="val-thickness">1.0</span> nm</label>
+            <input type="range" id="thickness" min="0.1" max="3" step="0.1" value="1.0">
+        </div>
+    </div>
+
+    <div class="stats">
+        Transmission Probability (T) &approx; <span id="probability-display">0</span>
+    </div>
+
+    <div id="plot"></div>
 </div>
-<div class="stack">
-<article class="card"><h2>Potential barrier and wavefunction</h2><p class="hint">The shaded region is the barrier. The blue curve is a schematic wavefunction amplitude.</p><div class="canvas-wrap"><canvas id="mainPlot" width="900" height="360"></canvas></div><div class="legend"><span class="pot">Potential barrier</span><span class="energy">Electron energy</span><span class="wf">Wavefunction ψ(x)</span></div></article>
-<article class="card"><h2>Barrier thickness vs tunneling</h2><p class="hint">This graph keeps E and V₀ fixed while sweeping barrier thickness.</p><div class="canvas-wrap"><canvas id="probPlot" width="900" height="290"></canvas></div></article>
-<article class="card"><h2>Interpretation</h2><div class="compare"><div class="compare-box"><strong>Increase barrier height</strong><div class="hint">κ increases → faster decay → smaller transmission.</div></div><div class="compare-box"><strong>Increase barrier thickness</strong><div class="hint">The wave must survive a longer evanescent region → transmission falls exponentially.</div></div></div><div style="margin-top:14px"><div class="hint">Current tunneling strength</div><div class="meter"><div id="meterFill" class="meter-fill"></div></div></div></article>
-</div>
-</section>
-<footer>Educational model · rectangular potential barrier · non-relativistic electron</footer>
-</main>
+
 <script>
-(()=>{
-const eV=1.602176634e-19,hbar=1.054571817e-34,me=9.1093837015e-31;
-const energy=document.getElementById('energy'),height=document.getElementById('height'),width=document.getElementById('width');
-const energyOut=document.getElementById('energyOut'),heightOut=document.getElementById('heightOut'),widthOut=document.getElementById('widthOut');
-const deltaE=document.getElementById('deltaE'),kappaEl=document.getElementById('kappa'),transmission=document.getElementById('transmission'),transmissionPercent=document.getElementById('transmissionPercent'),status=document.getElementById('status'),formula=document.getElementById('formula'),meterFill=document.getElementById('meterFill');
-const mainCanvas=document.getElementById('mainPlot'),probCanvas=document.getElementById('probPlot'),mainCtx=mainCanvas.getContext('2d'),probCtx=probCanvas.getContext('2d');
-function kappaNm(E,V0){if(E>=V0)return 0;return Math.sqrt(2*me*(V0-E)*eV)/hbar*1e-9}
-function Tapprox(E,V0,a){if(E>=V0)return 1;return Math.exp(-2*kappaNm(E,V0)*a)}
-function fmt(x){if(x===0)return '0';if(x>=.001&&x<1000)return x.toFixed(4).replace(/0+$/,'').replace(/\.$/,'');const q=Math.floor(Math.log10(x)),m=x/10**q;return `${m.toFixed(2)} × 10^${q}`}
-function resize(c,ctx,h){const d=Math.max(1,window.devicePixelRatio||1),w=c.clientWidth||800;c.width=Math.round(w*d);c.height=Math.round(h*d);ctx.setTransform(d,0,0,d,0,0);return{width:w,height:h}}
-function axes(ctx,w,h,l,r,t,b,xlab,ylab){const pw=w-l-r,ph=h-t-b;ctx.strokeStyle='#d9e1ea';ctx.lineWidth=1;for(let i=0;i<=6;i++){let x=l+i/6*pw;ctx.beginPath();ctx.moveTo(x,t);ctx.lineTo(x,t+ph);ctx.stroke()}for(let i=0;i<=5;i++){let y=t+i/5*ph;ctx.beginPath();ctx.moveTo(l,y);ctx.lineTo(l+pw,y);ctx.stroke()}ctx.strokeStyle='#18212f';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(l,t);ctx.lineTo(l,t+ph);ctx.lineTo(l+pw,t+ph);ctx.stroke();ctx.fillStyle='#667085';ctx.font='12px system-ui';ctx.textAlign='center';ctx.fillText(xlab,l+pw/2,h-4);ctx.save();ctx.translate(14,t+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText(ylab,0,0);ctx.restore()}
-function drawMain(E,V0,a){const {width:w,height:h}=resize(mainCanvas,mainCtx,360),ctx=mainCtx,l=56,r=18,t=20,b=42,pw=w-l-r,ph=h-t-b,xmin=-2.5,xmax=4.5,ymin=-1.25,ymax=Math.max(6.5,V0+1.2),xm=x=>l+(x-xmin)/(xmax-xmin)*pw,ym=y=>t+ph-(y-ymin)/(ymax-ymin)*ph;ctx.clearRect(0,0,w,h);axes(ctx,w,h,l,r,t,b,'Position x (nm)','Energy / ψ');let bl=xm(0),br=xm(a);ctx.fillStyle='rgba(102,112,133,.16)';ctx.fillRect(bl,ym(V0),br-bl,ym(0)-ym(V0));ctx.strokeStyle='#667085';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(xm(xmin),ym(0));ctx.lineTo(xm(0),ym(0));ctx.lineTo(xm(0),ym(V0));ctx.lineTo(xm(a),ym(V0));ctx.lineTo(xm(a),ym(0));ctx.lineTo(xm(xmax),ym(0));ctx.stroke();ctx.strokeStyle='#8b5cf6';ctx.lineWidth=2;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(xm(xmin),ym(E));ctx.lineTo(xm(xmax),ym(E));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#8b5cf6';ctx.font='12px system-ui';ctx.textAlign='left';ctx.fillText(`E = ${E.toFixed(2)} eV`,xm(xmin)+6,ym(E)-7);ctx.fillStyle='#667085';ctx.fillText(`V₀ = ${V0.toFixed(2)} eV`,xm(0)+8,ym(V0)-7);const k1=Math.sqrt(Math.max(E,.001))*5.2,kp=kappaNm(E,V0),T=Tapprox(E,V0,a),ta=Math.sqrt(T);ctx.strokeStyle='#2563eb';ctx.lineWidth=2.5;ctx.beginPath();let first=true;for(let x=xmin;x<=0;x+=.01){let psi=.7*Math.sin(k1*(x+2.5)),y=E+psi;if(first){ctx.moveTo(xm(x),ym(y));first=false}else ctx.lineTo(xm(x),ym(y))}const s=Math.sin(k1*2.5)>=0?1:-1;for(let x=0;x<=a;x+=.01){let amp=.7*Math.exp(-kp*x),y=E+s*amp;ctx.lineTo(xm(x),ym(y))}for(let x=a;x<=xmax;x+=.01){let psi=.7*ta*Math.sin(k1*(x-a)+.8),y=E+psi;ctx.lineTo(xm(x),ym(y))}ctx.stroke();ctx.fillStyle='#667085';ctx.textAlign='center';ctx.fillText(`barrier width = ${a.toFixed(2)} nm`,(bl+br)/2,ym(V0)+18)}
-function drawProb(E,V0,a0){const {width:w,height:h}=resize(probCanvas,probCtx,290),ctx=probCtx,l=58,r=18,t=18,b=42,pw=w-l-r,ph=h-t-b,xmin=.1,xmax=3,ymin=-12,ymax=0,xm=x=>l+(x-xmin)/(xmax-xmin)*pw,ym=y=>t+ph-(y-ymin)/(ymax-ymin)*ph;ctx.clearRect(0,0,w,h);axes(ctx,w,h,l,r,t,b,'Barrier thickness a (nm)','log10(T)');ctx.fillStyle='#667085';ctx.font='11px system-ui';ctx.textAlign='right';[-12,-9,-6,-3,0].forEach(v=>ctx.fillText(String(v),l-8,ym(v)+4));ctx.strokeStyle='#0f9d68';ctx.lineWidth=2.5;ctx.beginPath();let first=true;for(let a=xmin;a<=xmax;a+=.02){let T=Tapprox(E,V0,a),logT=Math.max(ymin,Math.log10(Math.max(T,1e-20))),px=xm(a),py=ym(logT);if(first){ctx.moveTo(px,py);first=false}else ctx.lineTo(px,py)}ctx.stroke();let ct=Tapprox(E,V0,a0),cl=Math.max(ymin,Math.log10(Math.max(ct,1e-20)));ctx.fillStyle='#2563eb';ctx.beginPath();ctx.arc(xm(a0),ym(cl),6,0,2*Math.PI);ctx.fill()}
-function update(){const E=+energy.value,V0=+height.value,a=+width.value,tunnel=E<V0,d=Math.max(0,V0-E),kp=kappaNm(E,V0),T=Tapprox(E,V0,a);energyOut.textContent=`${E.toFixed(2)} eV`;heightOut.textContent=`${V0.toFixed(2)} eV`;widthOut.textContent=`${a.toFixed(2)} nm`;deltaE.textContent=`${d.toFixed(2)} eV`;kappaEl.textContent=tunnel?`${kp.toFixed(2)} nm⁻¹`:'0 nm⁻¹';transmission.textContent=fmt(T);transmissionPercent.textContent=`${fmt(T*100)}%`;if(tunnel){status.textContent='Quantum tunneling regime: E < V₀';formula.textContent=`T ≈ exp[-2(${kp.toFixed(2)} nm⁻¹)(${a.toFixed(2)} nm)] = ${fmt(T)}`}else{status.textContent='E ≥ V₀: this is no longer sub-barrier tunneling.';formula.textContent='For this prototype, T is set to 1 when E ≥ V₀.'}meterFill.style.width=`${Math.max(0,Math.min(100,100*Math.pow(T,.18)))}%`;drawMain(E,V0,a);drawProb(E,V0,a)}
-[energy,height,width].forEach(x=>x.addEventListener('input',update));window.addEventListener('resize',update);update();
-})();
+    // Physical Constants
+    const m_e = 9.11e-31;     // Electron mass (kg)
+    const hbar = 1.054e-34;   // Reduced Planck constant (J*s)
+    const eV_to_J = 1.6e-19;  // Conversion factor: eV to Joules
+    const nm_to_m = 1e-9;     // Conversion factor: nm to meters
+
+    // Animation time variable
+    let time = 0;
+    const time_step = 0.1; // Speed of the wave animation
+
+    // Initial plot setup flag
+    let isPlotInitialized = false;
+
+    function calculateWaveData() {
+        // Fetch slider values
+        const E = parseFloat(document.getElementById('energy').value);
+        let V0 = parseFloat(document.getElementById('height').value);
+        const L = parseFloat(document.getElementById('thickness').value);
+
+        // Tunneling condition: V0 must be strictly greater than E for exponential decay
+        if (E >= V0) {
+            V0 = E + 0.1; 
+            document.getElementById('height').value = V0;
+        }
+
+        // Update UI Text
+        document.getElementById('val-energy').innerText = E.toFixed(1);
+        document.getElementById('val-height').innerText = V0.toFixed(1);
+        document.getElementById('val-thickness').innerText = L.toFixed(1);
+
+        // Convert to SI units for accurate physical scaling
+        const E_J = E * eV_to_J;
+        const V0_J = V0 * eV_to_J;
+        const L_m = L * nm_to_m;
+        
+        // Wave vector k (incident/transmitted) and decay constant alpha (inside barrier)
+        // Scaled back to nm^-1 for x-axis calculations
+        const k = Math.sqrt(2 * m_e * E_J) / hbar * nm_to_m; 
+        const alpha = Math.sqrt(2 * m_e * (V0_J - E_J)) / hbar * nm_to_m;
+        
+        // Approximate Transmission Probability T ≈ e^(-2 * alpha * L)
+        const T = Math.exp(-2 * alpha * L);
+        document.getElementById('probability-display').innerText = T.toExponential(4);
+
+        // Generate data arrays
+        const x_vals = [];
+        const v_vals = [];
+        const real_vals = [];
+        const imag_vals = [];
+        const env_vals = []; // Envelope magnitude
+
+        const visual_amplitude = 1.5; // Base amplitude height for visualization
+
+        // Calculate points from x = -2 nm to x = L + 2 nm
+        for (let x = -2; x <= L + 2; x += 0.02) {
+            x_vals.push(x);
+            
+            // Potential Barrier V(x)
+            let current_V = (x >= 0 && x <= L) ? V0 : 0;
+            v_vals.push(current_V);
+
+            // Wavefunction calculations (Simplified forward-propagating model for visual clarity)
+            let amp, phase;
+            if (x < 0) {
+                // Region 1: Incident Wave
+                amp = visual_amplitude;
+                phase = k * x;
+            } else if (x >= 0 && x <= L) {
+                // Region 2: Inside Barrier (Exponential Decay)
+                amp = visual_amplitude * Math.exp(-alpha * x);
+                phase = 0; // Simplified phase continuity
+            } else {
+                // Region 3: Transmitted Wave
+                amp = visual_amplitude * Math.exp(-alpha * L);
+                phase = k * (x - L);
+            }
+
+            env_vals.push(E + amp);
+            
+            // Time evolution: Psi(x,t) = Psi(x) * e^(-i*w*t)
+            // Real part: cos(phase - time)
+            // Imaginary part: sin(phase - time)
+            real_vals.push(E + amp * Math.cos(phase - time));
+            imag_vals.push(E + amp * Math.sin(phase - time));
+        }
+
+        return { x_vals, v_vals, real_vals, imag_vals, env_vals, E, V0 };
+    }
+
+    function updatePlot() {
+        const data = calculateWaveData();
+
+        const traceBarrier = {
+            x: data.x_vals, y: data.v_vals,
+            type: 'scatter', mode: 'lines', name: 'Potential Barrier (V₀)',
+            line: { color: '#34495e', width: 2, shape: 'hv' },
+            fill: 'tozeroy', fillcolor: 'rgba(52, 73, 94, 0.15)'
+        };
+
+        const traceReal = {
+            x: data.x_vals, y: data.real_vals,
+            type: 'scatter', mode: 'lines', name: 'Real Part (Re[Ψ])',
+            line: { color: '#2980b9', width: 2 }
+        };
+
+        const traceImag = {
+            x: data.x_vals, y: data.imag_vals,
+            type: 'scatter', mode: 'lines', name: 'Imaginary Part (Im[Ψ])',
+            line: { color: '#e67e22', width: 2, dash: 'dot' }
+        };
+
+        const traceEnvelope = {
+            x: data.x_vals, y: data.env_vals,
+            type: 'scatter', mode: 'lines', name: 'Magnitude Envelope (|Ψ|)',
+            line: { color: '#7f8c8d', width: 1, dash: 'dash' }
+        };
+
+        const layout = {
+            title: 'Time Evolution of Quantum Tunneling Wavefunction',
+            xaxis: { title: 'Position (nm)', range: [-2, document.getElementById('thickness').value * 1.0 + 2] },
+            yaxis: { title: 'Energy (eV) / Amplitude', range: [0, 22] },
+            showlegend: true,
+            legend: { orientation: 'h', y: -0.2 },
+            margin: { t: 40, r: 20, l: 50, b: 60 }
+        };
+
+        const plotData = [traceBarrier, traceReal, traceImag, traceEnvelope];
+
+        if (!isPlotInitialized) {
+            Plotly.newPlot('plot', plotData, layout, {responsive: true});
+            isPlotInitialized = true;
+        } else {
+            // Plotly.react is much faster for animation updates than newPlot
+            Plotly.react('plot', plotData, layout);
+        }
+    }
+
+    // Animation Loop using RequestAnimationFrame for smooth 60fps
+    function animate() {
+        time += time_step;
+        updatePlot();
+        requestAnimationFrame(animate);
+    }
+
+    // Initialize animation
+    animate();
+
 </script>
+
 </body>
 </html>
