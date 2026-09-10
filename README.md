@@ -1,2 +1,2 @@
-# photoelectric-effect-simulator
-The photoelectric effect occurs when incident photons have sufficient energy to overcome a material’s work function. Show how photon energy and work function affect whether electrons are emitted and what kinetic energy they acquire.
+# quantum-tunneling-simulator
+Quantum tunneling allows electrons to pass through a potential barrier even when their energy is below the barrier height. Show how barrier thickness and barrier height affect the wavefunction and tunneling probability.
