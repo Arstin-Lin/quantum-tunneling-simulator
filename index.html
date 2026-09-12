@@ -1,252 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Tunneling Animation</title>
-    <!-- Include Plotly.js for rendering -->
-    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 950px; margin: 0 auto; background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #2c3e50; }
-        .controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; padding: 15px; background: #eef2f5; border-radius: 8px; }
-        .control-group { display: flex; align-items: center; justify-content: space-between; font-weight: bold; }
-        input[type=range] { width: 65%; cursor: pointer; }
-
-        .display-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px 18px;
-            margin-top: 5px;
-            padding-top: 12px;
-            border-top: 1px solid #d7dee5;
-        }
-        .display-options label {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: normal;
-            cursor: pointer;
-        }
-        .display-options input[type=checkbox] {
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        .stats { text-align: center; font-size: 1.1em; margin-bottom: 10px; }
-        #probability-display { font-weight: bold; color: #e74c3c; font-size: 1.3em; }
-        #plot { width: 100%; height: 500px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Interactive quantum tunneling simulator for stationary electron scattering." />
+  <title>Quantum Tunneling Explorer</title>
+  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="container">
+    <header class="page-header">
+      <p class="eyebrow">Introduction to Semiconductor · Quantum Scattering</p>
+      <h1>Quantum Tunneling Explorer</h1>
+      <p class="subtitle">Stationary-state scattering from a finite rectangular potential barrier.</p>
+    </header>
 
-<div class="container">
-    <h2>Quantum Tunneling Visualization</h2>
-    <p style="text-align: center;">Interactive animation showing the real and imaginary parts of an electron's wavefunction.</p>
-    
-    <div class="controls">
-        <div class="control-group">
-            <label for="energy">Electron Energy (E): <span id="val-energy">5.0</span> eV</label>
-            <input type="range" id="energy" min="1" max="9.9" step="0.1" value="5">
-        </div>
-        <div class="control-group">
-            <label for="height">Barrier Height (V₀): <span id="val-height">10.0</span> eV</label>
-            <input type="range" id="height" min="2" max="20" step="0.5" value="10">
-        </div>
-        <div class="control-group">
-            <label for="thickness">Barrier Width (L): <span id="val-thickness">1.0</span> nm</label>
-            <input type="range" id="thickness" min="0.1" max="3" step="0.1" value="1.0">
-        </div>
+    <section class="controls" aria-label="Simulation controls">
+      <div class="control-group">
+        <label for="energy">Electron Energy E: <span id="val-energy">5.0</span> eV</label>
+        <input type="range" id="energy" min="1" max="20" step="0.1" value="5" />
+      </div>
 
-        <div class="display-options">
-            <label><input type="checkbox" id="show-barrier" checked> Potential barrier</label>
-            <label><input type="checkbox" id="show-real" checked> Re[Ψ]</label>
-            <label><input type="checkbox" id="show-imag" checked> Im[Ψ]</label>
-            <label><input type="checkbox" id="show-envelope" checked> |Ψ| envelope</label>
-        </div>
-    </div>
+      <div class="control-group">
+        <label for="height">Barrier Height V₀: <span id="val-height">10.0</span> eV</label>
+        <input type="range" id="height" min="2" max="20" step="0.5" value="10" />
+      </div>
 
-    <div class="stats">
-        Transmission Probability (T) &approx; <span id="probability-display">0</span>
-    </div>
+      <div class="control-group">
+        <label for="thickness">Barrier Width L: <span id="val-thickness">1.0</span> nm</label>
+        <input type="range" id="thickness" min="0.1" max="3" step="0.1" value="1.0" />
+      </div>
 
-    <div id="plot"></div>
-</div>
+      <fieldset class="display-options">
+        <legend>Display</legend>
+        <label><input type="checkbox" id="show-barrier" checked /> Potential barrier</label>
+        <label><input type="checkbox" id="show-real" checked /> Re[Ψ]</label>
+        <label><input type="checkbox" id="show-imag" checked /> Im[Ψ]</label>
+        <label><input type="checkbox" id="show-envelope" checked /> |Ψ|</label>
+        <label><input type="checkbox" id="show-incident" /> Incident component</label>
+        <label><input type="checkbox" id="show-reflected" /> Reflected component</label>
+        <label><input type="checkbox" id="show-transmitted" /> Transmitted component</label>
+      </fieldset>
+    </section>
 
-<script>
-    // Physical Constants
-    const m_e = 9.11e-31;     // Electron mass (kg)
-    const hbar = 1.054e-34;   // Reduced Planck constant (J*s)
-    const eV_to_J = 1.6e-19;  // Conversion factor: eV to Joules
-    const nm_to_m = 1e-9;     // Conversion factor: nm to meters
+    <section class="stats" aria-label="Scattering observables">
+      <span>Transmission T = <strong id="transmission-display">0</strong></span>
+      <span>Reflection R = <strong id="reflection-display">0</strong></span>
+    </section>
 
-    // Animation time variable
-    let time = 0;
-    const time_step = 0.1; // Speed of the wave animation
+    <section class="plot-panel">
+      <div id="plot"></div>
+    </section>
 
-    // Initial plot setup flag
-    let isPlotInitialized = false;
+    <footer>Rectangular barrier · stationary-state solution · boundary-matched wavefunction</footer>
+  </main>
 
-    function calculateWaveData() {
-        // Fetch slider values
-        const E = parseFloat(document.getElementById('energy').value);
-        let V0 = parseFloat(document.getElementById('height').value);
-        const L = parseFloat(document.getElementById('thickness').value);
-
-        // Tunneling condition: V0 must be strictly greater than E for exponential decay
-        if (E >= V0) {
-            V0 = E + 0.1; 
-            document.getElementById('height').value = V0;
-        }
-
-        // Update UI Text
-        document.getElementById('val-energy').innerText = E.toFixed(1);
-        document.getElementById('val-height').innerText = V0.toFixed(1);
-        document.getElementById('val-thickness').innerText = L.toFixed(1);
-
-        // Convert to SI units for accurate physical scaling
-        const E_J = E * eV_to_J;
-        const V0_J = V0 * eV_to_J;
-        const L_m = L * nm_to_m;
-        
-        // Wave vector k (incident/transmitted) and decay constant alpha (inside barrier)
-        // Scaled back to nm^-1 for x-axis calculations
-        const k = Math.sqrt(2 * m_e * E_J) / hbar * nm_to_m; 
-        const alpha = Math.sqrt(2 * m_e * (V0_J - E_J)) / hbar * nm_to_m;
-        
-        // Approximate Transmission Probability T ≈ e^(-2 * alpha * L)
-        const T = Math.exp(-2 * alpha * L);
-        document.getElementById('probability-display').innerText = T.toExponential(4);
-
-        // Generate data arrays
-        const x_vals = [];
-        const v_vals = [];
-        const real_vals = [];
-        const imag_vals = [];
-        const env_vals = []; // Envelope magnitude
-
-        const visual_amplitude = 1.5; // Base amplitude height for visualization
-
-        // Calculate points from x = -2 nm to x = L + 2 nm
-        for (let x = -2; x <= L + 2; x += 0.02) {
-            x_vals.push(x);
-            
-            // Potential Barrier V(x)
-            let current_V = (x >= 0 && x <= L) ? V0 : 0;
-            v_vals.push(current_V);
-
-            // Wavefunction calculations (Simplified forward-propagating model for visual clarity)
-            let amp, phase;
-            if (x < 0) {
-                // Region 1: Incident Wave
-                amp = visual_amplitude;
-                phase = k * x;
-            } else if (x >= 0 && x <= L) {
-                // Region 2: Inside Barrier (Exponential Decay)
-                amp = visual_amplitude * Math.exp(-alpha * x);
-                phase = 0; // Simplified phase continuity
-            } else {
-                // Region 3: Transmitted Wave
-                amp = visual_amplitude * Math.exp(-alpha * L);
-                phase = k * (x - L);
-            }
-
-            env_vals.push(E + amp);
-            
-            // Time evolution: Psi(x,t) = Psi(x) * e^(-i*w*t)
-            // Real part: cos(phase - time)
-            // Imaginary part: sin(phase - time)
-            real_vals.push(E + amp * Math.cos(phase - time));
-            imag_vals.push(E + amp * Math.sin(phase - time));
-        }
-
-        return { x_vals, v_vals, real_vals, imag_vals, env_vals, E, V0 };
-    }
-
-    function updatePlot() {
-        const data = calculateWaveData();
-
-        const traceBarrier = {
-            x: data.x_vals, y: data.v_vals,
-            type: 'scatter', mode: 'lines', name: 'Potential Barrier (V₀)',
-            line: { color: '#34495e', width: 2, shape: 'hv' },
-            fill: 'tozeroy', fillcolor: 'rgba(52, 73, 94, 0.15)'
-        };
-
-        const traceReal = {
-            x: data.x_vals, y: data.real_vals,
-            type: 'scatter', mode: 'lines', name: 'Real Part (Re[Ψ])',
-            line: { color: '#2980b9', width: 2 }
-        };
-
-        const traceImag = {
-            x: data.x_vals, y: data.imag_vals,
-            type: 'scatter', mode: 'lines', name: 'Imaginary Part (Im[Ψ])',
-            line: { color: '#e67e22', width: 2, dash: 'dot' }
-        };
-
-        const traceEnvelope = {
-            x: data.x_vals, y: data.env_vals,
-            type: 'scatter', mode: 'lines', name: 'Magnitude Envelope (|Ψ|)',
-            line: { color: '#7f8c8d', width: 1, dash: 'dash' }
-        };
-
-        const layout = {
-            title: 'Time Evolution of Quantum Tunneling Wavefunction',
-            xaxis: { title: 'Position (nm)', range: [-2, document.getElementById('thickness').value * 1.0 + 2] },
-            yaxis: { title: 'Energy (eV) / Amplitude', range: [0, 22] },
-            showlegend: true,
-            legend: { orientation: 'h', y: -0.2 },
-            margin: { t: 40, r: 20, l: 50, b: 60 }
-        };
-
-        const plotData = [];
-
-        if (document.getElementById('show-barrier').checked) {
-            plotData.push(traceBarrier);
-        }
-        if (document.getElementById('show-real').checked) {
-            plotData.push(traceReal);
-        }
-        if (document.getElementById('show-imag').checked) {
-            plotData.push(traceImag);
-        }
-        if (document.getElementById('show-envelope').checked) {
-            plotData.push(traceEnvelope);
-        }
-
-        if (!isPlotInitialized) {
-            Plotly.newPlot('plot', plotData, layout, {responsive: true});
-            isPlotInitialized = true;
-        } else {
-            // Plotly.react is much faster for animation updates than newPlot
-            Plotly.react('plot', plotData, layout);
-        }
-    }
-
-    // Animation Loop using RequestAnimationFrame for smooth 60fps
-    function animate() {
-        time += time_step;
-        updatePlot();
-        requestAnimationFrame(animate);
-    }
-
-    const displayControlIds = [
-        'show-barrier',
-        'show-real',
-        'show-imag',
-        'show-envelope'
-    ];
-
-    displayControlIds.forEach((id) => {
-        document.getElementById(id).addEventListener('change', updatePlot);
-    });
-
-    // Initialize animation
-    animate();
-
-</script>
-
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
