@@ -11,19 +11,12 @@ function solveCurrentState() {
     heightEV: state.potential.heightEV,
     widthNM: state.potential.widthNM,
   });
-
   updateScatteringReadout(latestSolution);
 }
 
 function render() {
-  if (!latestSolution) {
-    solveCurrentState();
-  }
-
-  renderStationarySimulation({
-    state,
-    solution: latestSolution,
-  });
+  if (!latestSolution) solveCurrentState();
+  renderStationarySimulation({ state, solution: latestSolution });
 }
 
 function handleStateChange() {

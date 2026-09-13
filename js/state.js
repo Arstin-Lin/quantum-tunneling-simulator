@@ -1,20 +1,18 @@
 export const state = {
-  electron: {
-    energyEV: 5.0,
-  },
+  waveForm: "plane",
+  electron: { energyEV: 5.0 },
   potential: {
     type: "rectangularBarrier",
     heightEV: 10.0,
     widthNM: 1.0,
   },
+  planeWave: { decomposition: "total" },
   display: {
-    barrier: true,
     real: true,
     imaginary: true,
     magnitude: true,
-    incident: false,
-    reflected: false,
-    transmitted: false,
+    energyValues: true,
+    scatteringObservables: true,
   },
   animation: {
     phase: 0,
