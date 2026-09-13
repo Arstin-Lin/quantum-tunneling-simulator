@@ -5,54 +5,56 @@ const ids = {
   energyValue: "val-energy",
   heightValue: "val-height",
   thicknessValue: "val-thickness",
-  barrier: "show-barrier",
+  planeWave: "wave-plane",
+  totalMode: "mode-total",
+  componentMode: "mode-components",
   real: "show-real",
   imaginary: "show-imag",
-  magnitude: "show-envelope",
-  incident: "show-incident",
-  reflected: "show-reflected",
-  transmitted: "show-transmitted",
+  magnitude: "show-magnitude",
+  energyValues: "show-energy-values",
+  scatteringObservables: "show-rt",
+  observablesPanel: "scattering-observables",
   transmissionOutput: "transmission-display",
   reflectionOutput: "reflection-display",
 };
 
 export function bindUI(state, onStateChange) {
-  const energy = document.getElementById(ids.energy);
-  const height = document.getElementById(ids.height);
-  const thickness = document.getElementById(ids.thickness);
-
-  const displayInputs = {
-    barrier: document.getElementById(ids.barrier),
+  const controls = {
+    energy: document.getElementById(ids.energy),
+    height: document.getElementById(ids.height),
+    thickness: document.getElementById(ids.thickness),
+    planeWave: document.getElementById(ids.planeWave),
+    totalMode: document.getElementById(ids.totalMode),
+    componentMode: document.getElementById(ids.componentMode),
     real: document.getElementById(ids.real),
     imaginary: document.getElementById(ids.imaginary),
     magnitude: document.getElementById(ids.magnitude),
-    incident: document.getElementById(ids.incident),
-    reflected: document.getElementById(ids.reflected),
-    transmitted: document.getElementById(ids.transmitted),
+    energyValues: document.getElementById(ids.energyValues),
+    scatteringObservables: document.getElementById(ids.scatteringObservables),
   };
 
-  function syncStateFromControls() {
-    state.electron.energyEV = Number(energy.value);
-    state.potential.heightEV = Number(height.value);
-    state.potential.widthNM = Number(thickness.value);
-
-    for (const [key, input] of Object.entries(displayInputs)) {
-      state.display[key] = input.checked;
-    }
-
+  function syncState() {
+    state.waveForm = "plane";
+    state.electron.energyEV = Number(controls.energy.value);
+    state.potential.heightEV = Number(controls.height.value);
+    state.potential.widthNM = Number(controls.thickness.value);
+    state.planeWave.decomposition = controls.componentMode.checked ? "components" : "total";
+    state.display.real = controls.real.checked;
+    state.display.imaginary = controls.imaginary.checked;
+    state.display.magnitude = controls.magnitude.checked;
+    state.display.energyValues = controls.energyValues.checked;
+    state.display.scatteringObservables = controls.scatteringObservables.checked;
     updateControlLabels(state);
+    updateVisibility(state);
     onStateChange();
   }
 
-  energy.addEventListener("input", syncStateFromControls);
-  height.addEventListener("input", syncStateFromControls);
-  thickness.addEventListener("input", syncStateFromControls);
-
-  for (const input of Object.values(displayInputs)) {
-    input.addEventListener("change", syncStateFromControls);
-  }
+  [controls.energy, controls.height, controls.thickness].forEach((el) => el.addEventListener("input", syncState));
+  [controls.totalMode, controls.componentMode, controls.real, controls.imaginary, controls.magnitude, controls.energyValues, controls.scatteringObservables]
+    .forEach((el) => el.addEventListener("change", syncState));
 
   updateControlLabels(state);
+  updateVisibility(state);
 }
 
 export function updateControlLabels(state) {
@@ -62,6 +64,10 @@ export function updateControlLabels(state) {
 }
 
 export function updateScatteringReadout({ R, T }) {
-  document.getElementById(ids.transmissionOutput).textContent = T.toExponential(4);
-  document.getElementById(ids.reflectionOutput).textContent = R.toExponential(4);
+  document.getElementById(ids.transmissionOutput).textContent = T.toPrecision(5);
+  document.getElementById(ids.reflectionOutput).textContent = R.toPrecision(5);
+}
+
+function updateVisibility(state) {
+  document.getElementById(ids.observablesPanel).hidden = !state.display.scatteringObservables;
 }

@@ -1,58 +1,46 @@
-# Quantum Tunneling Explorer — v0.5 Modular Refactor
+# Quantum Tunneling Explorer — v0.6 Plane-Wave Interface
 
-v0.5 reorganizes the simulator into separate interface, state, physics, and rendering modules. The purpose of this milestone is architectural: the stationary-scattering model remains the same while the code becomes easier to extend.
+This version builds the first presentation architecture on top of the modular v0.5 codebase.
 
-## Structure
+## Visible changes
 
-```text
-quantum_tunneling_v0.5_modular/
-├── index.html
-├── style.css
-└── js/
-    ├── app.js
-    ├── state.js
-    ├── ui.js
-    ├── complex.js
-    ├── potentials.js
-    ├── stationarySolver.js
-    └── renderer.js
-```
+- Three scientific visualization blocks:
+  1. Potential / Energy Landscape: `V(x), E`
+  2. Complex Wavefunction: `psi(x,t)`
+  3. Probability Density: `|psi(x,t)|^2`
+- Plane-wave decomposition selector:
+  - Total state
+  - Components
+- Wavefunction representations:
+  - Real part
+  - Imaginary part
+  - Magnitude
+- Optional energy-value labels
+- Optional `R` and `T` readout
+- Wave-packet choice is visible but intentionally disabled until the numerical propagator is implemented.
 
-- `index.html`: semantic page structure and module entry point.
-- `style.css`: appearance and responsive layout only.
-- `js/state.js`: central application state.
-- `js/ui.js`: sliders, checkboxes, labels, and observable readouts.
-- `js/complex.js`: minimal complex arithmetic.
-- `js/potentials.js`: the potential-energy function `V(x)`.
-- `js/stationarySolver.js`: boundary-matched stationary scattering solver.
-- `js/renderer.js`: Plotly sampling and rendering.
-- `js/app.js`: application orchestration and animation loop.
+## Component mode
 
-## Physics in v0.5
+The stationary state is separated spatially into:
 
-The stationary solver uses
+- incident component in Region I
+- reflected component in Region I
+- boundary-matched barrier-region state in Region II
+- transmitted component in Region III
 
-```text
-Region I:    exp(ikx) + r exp(-ikx)
-Region II:   A exp(iqx) + B exp(-iqx)
-Region III:  t exp(ikx)
-```
+The probability-density block always shows the physical total-state density `|psi|^2`, including interference.
 
-with continuity of the wavefunction and its first derivative at both interfaces.
+## Physics robustness
 
-The same formulation covers both regimes:
+The stationary solver now includes the exact threshold form for `E = V0`, where the Region-II solution is linear in `x` rather than oscillatory or exponential. This avoids the singular `q = 0` form of the ordinary basis.
 
-- `E < V0`: `q` is imaginary and the barrier-region solution is evanescent.
-- `E >= V0`: `q` is real and the barrier-region solution is oscillatory.
-
-`R + T ≈ 1` is used only as an internal numerical consistency check and is not displayed in the interface.
+`R + T ≈ 1` remains an internal consistency check only and is not displayed.
 
 ## Run locally
 
-Because v0.5 uses JavaScript ES modules (`import` / `export`), serve the project through HTTP instead of opening `index.html` via `file://`.
+Because the project uses ES modules:
 
 ```bash
-cd quantum_tunneling_v0.5_modular
 python3 -m http.server 8000
 ```
 
@@ -62,34 +50,22 @@ Then open:
 http://localhost:8000
 ```
 
-Stop the server with `Ctrl + C`.
-
-GitHub Pages serves ES modules correctly as well.
-
-## Git workflow for this milestone
-
-Before editing your repository:
+## Recommended Git feature-branch workflow
 
 ```bash
 git status
 git pull
+git switch -c feature/plane-wave-interface
 ```
 
-After copying the v0.5 files into your repository and verifying the simulator locally:
+After replacing/testing the files:
 
 ```bash
 git status
 git diff
 git add .
-git commit -m "Refactor simulator into modular JavaScript files"
-git push
+git commit -m "Add plane-wave interface and three-panel visualization"
+git push -u origin feature/plane-wave-interface
 ```
 
-## Planned next milestones
-
-1. Three visualization blocks: `E`, complex `ψ`, and `|ψ|²`.
-2. Plane-wave total/component display mode.
-3. Potential-form selector for step, barrier, well, and double barrier.
-4. Phase-spectrum rendering.
-5. Wave-packet solver with adjustable initial position `x0` and width `sigma`.
-6. Multi-barrier / resonant-tunneling support.
+After review, merge the branch into `main` on GitHub or locally.
