@@ -1,150 +1,153 @@
-import { abs, expI, mul } from "./complex.js";
+import { abs, abs2, expI, mul } from "./complex.js";
 import { potentialAt } from "./potentials.js";
 import { evaluateStationaryState } from "./stationarySolver.js";
 
-let plotInitialized = false;
+const initialized = { energy: false, wavefunction: false, probability: false };
 
-function applyTimePhase(z, phase) {
-  return mul(z, expI(-phase));
-}
+function timeRotate(z, phase) { return mul(z, expI(-phase)); }
+function nanOutside(value, active) { return active ? value : NaN; }
 
 export function renderStationarySimulation({ state, solution }) {
+  const sample = sampleStationaryState(state, solution);
+  renderEnergyPanel(state, sample);
+  renderWavefunctionPanel(state, sample);
+  renderProbabilityPanel(state, sample);
+}
+
+function sampleStationaryState(state, solution) {
   const widthNM = state.potential.widthNM;
-  const energyEV = state.electron.energyEV;
-  const heightEV = state.potential.heightEV;
+  const xMin = -2.5;
+  const xMax = widthNM + 2.5;
+  const dx = 0.015;
+  const x = [], potential = [], total = [], incident = [], reflected = [], inside = [], transmitted = [];
 
-  const xValues = [];
-  const potentialValues = [];
-  const realValues = [];
-  const imaginaryValues = [];
-  const magnitudeValues = [];
-  const incidentValues = [];
-  const reflectedValues = [];
-  const transmittedValues = [];
+  for (let position = xMin; position <= xMax; position += dx) {
+    const pieces = evaluateStationaryState(position, solution, widthNM);
+    x.push(position);
+    potential.push(potentialAt(position, state.potential));
+    total.push(timeRotate(pieces.total, state.animation.phase));
+    incident.push(timeRotate(pieces.incident, state.animation.phase));
+    reflected.push(timeRotate(pieces.reflected, state.animation.phase));
+    inside.push(timeRotate(pieces.inside, state.animation.phase));
+    transmitted.push(timeRotate(pieces.transmitted, state.animation.phase));
+  }
+  return { x, potential, total, incident, reflected, inside, transmitted, xMin, xMax };
+}
 
-  const visualScale = 1.5;
-  const xMin = -2;
-  const xMax = widthNM + 2;
-  const dx = 0.02;
+function renderEnergyPanel(state, data) {
+  const traces = [{
+    x: data.x, y: data.potential, type: "scatter", mode: "lines", name: "V(x)",
+    line: { color: "#34495e", width: 2, shape: "hv" }, fill: "tozeroy", fillcolor: "rgba(52,73,94,.14)", hovertemplate: "x=%{x:.3f} nm<br>V=%{y:.3f} eV<extra></extra>",
+  }, {
+    x: [data.xMin, data.xMax], y: [state.electron.energyEV, state.electron.energyEV], type: "scatter", mode: "lines", name: "E",
+    line: { color: "#8e44ad", width: 2, dash: "dash" }, hovertemplate: `E=${state.electron.energyEV.toFixed(3)} eV<extra></extra>`,
+  }];
 
-  for (let x = xMin; x <= xMax; x += dx) {
-    const components = evaluateStationaryState(x, solution, widthNM);
+  const annotations = state.display.energyValues ? [
+    { x: data.xMin + .08, y: state.electron.energyEV, text: `E = ${state.electron.energyEV.toFixed(2)} eV`, showarrow: false, xanchor: "left", yshift: 12 },
+    { x: state.potential.widthNM / 2, y: state.potential.heightEV, text: `V₀ = ${state.potential.heightEV.toFixed(2)} eV`, showarrow: false, yshift: 14 },
+  ] : [];
 
-    const totalAnimated = applyTimePhase(components.total, state.animation.phase);
-    const incidentAnimated = applyTimePhase(components.incident, state.animation.phase);
-    const reflectedAnimated = applyTimePhase(components.reflected, state.animation.phase);
-    const transmittedAnimated = applyTimePhase(components.transmitted, state.animation.phase);
+  drawPlot("energy-plot", "energy", traces, {
+    xaxis: commonXAxis(data), yaxis: { title: "Energy (eV)", rangemode: "tozero" },
+    annotations, showlegend: false, margin: { t: 15, r: 18, l: 64, b: 50 },
+  });
+}
 
-    xValues.push(x);
-    potentialValues.push(potentialAt(x, state.potential));
-    realValues.push(energyEV + visualScale * totalAnimated.re);
-    imaginaryValues.push(energyEV + visualScale * totalAnimated.im);
-    magnitudeValues.push(energyEV + visualScale * abs(components.total));
-    incidentValues.push(energyEV + visualScale * incidentAnimated.re);
-    reflectedValues.push(energyEV + visualScale * reflectedAnimated.re);
-    transmittedValues.push(energyEV + visualScale * transmittedAnimated.re);
+function wavefunctionYRange(state, data) {
+  let waveSets;
+
+  if (state.planeWave.decomposition === "total") {
+    waveSets = [data.total];
+  } else {
+    waveSets = [
+      data.incident,
+      data.reflected,
+      data.inside,
+      data.transmitted,
+    ];
   }
 
+  let maxAmplitude = 0;
+
+  for (const wave of waveSets) {
+    for (const z of wave) {
+      maxAmplitude = Math.max(
+        maxAmplitude,
+        abs(z),
+      );
+    }
+  }
+
+  // Add 15% padding.
+  const paddedLimit = Math.max(
+    1.25,
+    1.15 * maxAmplitude,
+  );
+
+  // Round upward to the nearest 0.5
+  // so small parameter changes do not constantly resize the axis.
+  const limit =
+    Math.ceil(paddedLimit * 2) / 2;
+
+  return [-limit, limit];
+}
+
+function renderWavefunctionPanel(state, data) {
   const traces = [];
 
-  if (state.display.barrier) {
-    traces.push({
-      x: xValues,
-      y: potentialValues,
-      type: "scatter",
-      mode: "lines",
-      name: "V(x)",
-      line: { color: "#34495e", width: 2, shape: "hv" },
-      fill: "tozeroy",
-      fillcolor: "rgba(52, 73, 94, 0.15)",
-    });
-  }
+  const yRange =
+  wavefunctionYRange(state, data);
 
-  if (state.display.real) {
-    traces.push({
-      x: xValues,
-      y: realValues,
-      type: "scatter",
-      mode: "lines",
-      name: "Re[Ψ]",
-      line: { color: "#2980b9", width: 2 },
-    });
-  }
-
-  if (state.display.imaginary) {
-    traces.push({
-      x: xValues,
-      y: imaginaryValues,
-      type: "scatter",
-      mode: "lines",
-      name: "Im[Ψ]",
-      line: { color: "#e67e22", width: 2, dash: "dot" },
-    });
-  }
-
-  if (state.display.magnitude) {
-    traces.push({
-      x: xValues,
-      y: magnitudeValues,
-      type: "scatter",
-      mode: "lines",
-      name: "|Ψ|",
-      line: { color: "#7f8c8d", width: 1.5, dash: "dash" },
-    });
-  }
-
-  if (state.display.incident) {
-    traces.push({
-      x: xValues,
-      y: incidentValues,
-      type: "scatter",
-      mode: "lines",
-      name: "Incident component",
-      line: { color: "#27ae60", width: 2 },
-    });
-  }
-
-  if (state.display.reflected) {
-    traces.push({
-      x: xValues,
-      y: reflectedValues,
-      type: "scatter",
-      mode: "lines",
-      name: "Reflected component",
-      line: { color: "#c0392b", width: 2, dash: "dash" },
-    });
-  }
-
-  if (state.display.transmitted) {
-    traces.push({
-      x: xValues,
-      y: transmittedValues,
-      type: "scatter",
-      mode: "lines",
-      name: "Transmitted component",
-      line: { color: "#8e44ad", width: 2, dash: "dashdot" },
-    });
-  }
-
-  const maxY = Math.max(22, heightEV + 4, energyEV + 4);
-
-  const layout = {
-    title: energyEV < heightEV
-      ? "Sub-barrier scattering: E < V₀"
-      : "Above-barrier scattering: E ≥ V₀",
-    xaxis: { title: "Position x (nm)", range: [xMin, xMax] },
-    yaxis: { title: "Energy (eV) / wavefunction amplitude", range: [0, maxY] },
-    showlegend: true,
-    legend: { orientation: "h", y: -0.2 },
-    margin: { t: 50, r: 20, l: 60, b: 85 },
-  };
-
-  const config = { responsive: true, displaylogo: false };
-
-  if (!plotInitialized) {
-    Plotly.newPlot("plot", traces, layout, config);
-    plotInitialized = true;
+  if (state.planeWave.decomposition === "total") {
+    addRepresentations(traces, data.x, data.total, "ψ", state.display, { real: "#2457d6", imag: "#d97706", magnitude: "#667085" });
   } else {
-    Plotly.react("plot", traces, layout, config);
+    addComponent(traces, data.x, data.incident, "Incident", state.display, "#0f8a5f");
+    addComponent(traces, data.x, data.reflected, "Reflected", state.display, "#c2413b");
+    addComponent(traces, data.x, data.inside, "Barrier region", state.display, "#7c3aed");
+    addComponent(traces, data.x, data.transmitted, "Transmitted", state.display, "#0f6fa8");
   }
+
+  drawPlot("wavefunction-plot", "wavefunction", traces, {
+    xaxis: commonXAxis(data), yaxis: { title: "Wavefunction amplitude", zeroline: true, zerolinecolor: "#b7bfca", range: yRange, autorange: false },
+    showlegend: true, legend: { orientation: "h", y: -0.22 }, margin: { t: 15, r: 18, l: 70, b: 82 },
+  });
+}
+
+function addRepresentations(traces, x, values, label, display, colors) {
+  if (display.real) traces.push(lineTrace(x, values.map(z => z.re), `Re[${label}]`, colors.real));
+  if (display.imaginary) traces.push(lineTrace(x, values.map(z => z.im), `Im[${label}]`, colors.imag, "dot"));
+  if (display.magnitude) traces.push(lineTrace(x, values.map(abs), `|${label}|`, colors.magnitude, "dash"));
+}
+
+function addComponent(traces, x, values, label, display, color) {
+  const active = values.map(z => abs2(z) > 1e-24);
+  if (display.real) traces.push(lineTrace(x, values.map((z,i) => nanOutside(z.re, active[i])), `Re[ψ] · ${label}`, color));
+  if (display.imaginary) traces.push(lineTrace(x, values.map((z,i) => nanOutside(z.im, active[i])), `Im[ψ] · ${label}`, color, "dot"));
+  if (display.magnitude) traces.push(lineTrace(x, values.map((z,i) => nanOutside(abs(z), active[i])), `|ψ| · ${label}`, color, "dash"));
+}
+
+function renderProbabilityPanel(state, data) {
+  const density = data.total.map(abs2);
+  const traces = [{
+    x: data.x, y: density, type: "scatter", mode: "lines", name: "|ψ|²",
+    line: { color: "#2457d6", width: 2.4 }, fill: "tozeroy", fillcolor: "rgba(36,87,214,.08)",
+    hovertemplate: "x=%{x:.3f} nm<br>|ψ|²=%{y:.5f}<extra></extra>",
+  }];
+  drawPlot("probability-plot", "probability", traces, {
+    xaxis: commonXAxis(data), yaxis: { title: "Probability density (arb. units)", rangemode: "tozero" },
+    showlegend: false, margin: { t: 15, r: 18, l: 78, b: 50 },
+  });
+}
+
+function lineTrace(x, y, name, color, dash = "solid") {
+  return { x, y, type: "scatter", mode: "lines", name, line: { color, width: 2, dash }, hovertemplate: "x=%{x:.3f} nm<br>%{y:.5f}<extra>" + name + "</extra>" };
+}
+
+function commonXAxis(data) { return { title: "Position x (nm)", range: [data.xMin, data.xMax], zeroline: false }; }
+
+function drawPlot(elementId, key, traces, layout) {
+  const config = { responsive: true, displaylogo: false, modeBarButtonsToRemove: ["select2d", "lasso2d"] };
+  if (!initialized[key]) { Plotly.newPlot(elementId, traces, layout, config); initialized[key] = true; }
+  else Plotly.react(elementId, traces, layout, config);
 }
