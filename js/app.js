@@ -1,36 +1,18 @@
 import { state } from "./state.js";
 import { bindUI, updateScatteringReadout } from "./ui.js";
-import { solveRectangularBarrier } from "./stationarySolver.js";
+import { buildPotentialProfile } from "./potentials.js";
+import { solveStationaryScattering } from "./stationarySolver.js";
 import { renderStationarySimulation } from "./renderer.js";
 
-let latestSolution = null;
-
-function solveCurrentState() {
-  latestSolution = solveRectangularBarrier({
-    energyEV: state.electron.energyEV,
-    heightEV: state.potential.heightEV,
-    widthNM: state.potential.widthNM,
-  });
+let latestSolution=null;
+function solveCurrentState(){
+  const profile=buildPotentialProfile(state.potential);
+  latestSolution=solveStationaryScattering({energyEV:state.electron.energyEV,profile});
   updateScatteringReadout(latestSolution);
 }
-
-function render() {
-  if (!latestSolution) solveCurrentState();
-  renderStationarySimulation({ state, solution: latestSolution });
-}
-
-function handleStateChange() {
-  solveCurrentState();
-  render();
-}
-
-bindUI(state, handleStateChange);
+function render(){if(!latestSolution)solveCurrentState();renderStationarySimulation({state,solution:latestSolution});}
+function handleStateChange(){solveCurrentState();render();}
+bindUI(state,handleStateChange);
 solveCurrentState();
-
-function animate() {
-  state.animation.phase += state.animation.phaseStep;
-  render();
-  requestAnimationFrame(animate);
-}
-
+function animate(){state.animation.phase+=state.animation.phaseStep;render();requestAnimationFrame(animate);}
 animate();

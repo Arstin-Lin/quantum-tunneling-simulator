@@ -65,3 +65,23 @@ footer { margin: 18px 0 5px; color: var(--muted); font-size: .8rem; text-align: 
   .viz-heading { align-items: flex-start; }
   .wavefunction-plot { height: 330px; }
 }
+
+
+select {
+  width: 100%;
+  min-height: 38px;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+}
+.hidden { display: none !important; }
+.parameter-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+@media (max-width: 1100px) {
+  .parameter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .parameter-grid { grid-template-columns: 1fr; }
+}
