@@ -1,73 +1,57 @@
 const ids = {
-  energy: "energy",
-  height: "height",
-  thickness: "thickness",
-  energyValue: "val-energy",
-  heightValue: "val-height",
-  thicknessValue: "val-thickness",
-  planeWave: "wave-plane",
-  totalMode: "mode-total",
-  componentMode: "mode-components",
-  real: "show-real",
-  imaginary: "show-imag",
-  magnitude: "show-magnitude",
-  energyValues: "show-energy-values",
-  scatteringObservables: "show-rt",
-  observablesPanel: "scattering-observables",
-  transmissionOutput: "transmission-display",
-  reflectionOutput: "reflection-display",
+  potentialType:"potential-type", energy:"energy", height:"height", thickness:"thickness", spacing:"spacing",
+  energyValue:"val-energy", heightValue:"val-height", thicknessValue:"val-thickness", spacingValue:"val-spacing",
+  heightLabel:"height-label", widthLabel:"width-label", widthControl:"width-control", spacingControl:"spacing-control",
+  totalMode:"mode-total", componentMode:"mode-components", real:"show-real", imaginary:"show-imag", magnitude:"show-magnitude",
+  energyValues:"show-energy-values", scatteringObservables:"show-rt", observablesPanel:"scattering-observables",
+  transmissionOutput:"transmission-display", reflectionOutput:"reflection-display",
 };
 
-export function bindUI(state, onStateChange) {
-  const controls = {
-    energy: document.getElementById(ids.energy),
-    height: document.getElementById(ids.height),
-    thickness: document.getElementById(ids.thickness),
-    planeWave: document.getElementById(ids.planeWave),
-    totalMode: document.getElementById(ids.totalMode),
-    componentMode: document.getElementById(ids.componentMode),
-    real: document.getElementById(ids.real),
-    imaginary: document.getElementById(ids.imaginary),
-    magnitude: document.getElementById(ids.magnitude),
-    energyValues: document.getElementById(ids.energyValues),
-    scatteringObservables: document.getElementById(ids.scatteringObservables),
-  };
+export function bindUI(state,onStateChange) {
+  const c = Object.fromEntries(Object.entries(ids).map(([k,id])=>[k,document.getElementById(id)]));
+
+  function configurePotentialControls() {
+    const type = c.potentialType.value;
+    c.widthControl.classList.toggle("hidden", type === "step");
+    c.spacingControl.classList.toggle("hidden", type !== "doubleBarrier");
+    c.heightLabel.textContent = type === "well" ? "Well depth" : type === "step" ? "Step height" : "Barrier height";
+    c.widthLabel.textContent = type === "well" ? "Well width" : "Barrier width";
+  }
 
   function syncState() {
     state.waveForm = "plane";
-    state.electron.energyEV = Number(controls.energy.value);
-    state.potential.heightEV = Number(controls.height.value);
-    state.potential.widthNM = Number(controls.thickness.value);
-    state.planeWave.decomposition = controls.componentMode.checked ? "components" : "total";
-    state.display.real = controls.real.checked;
-    state.display.imaginary = controls.imaginary.checked;
-    state.display.magnitude = controls.magnitude.checked;
-    state.display.energyValues = controls.energyValues.checked;
-    state.display.scatteringObservables = controls.scatteringObservables.checked;
-    updateControlLabels(state);
-    updateVisibility(state);
+    state.electron.energyEV = Number(c.energy.value);
+    state.potential.type = c.potentialType.value;
+    state.potential.heightEV = Number(c.height.value);
+    state.potential.widthNM = Number(c.thickness.value);
+    state.potential.spacingNM = Number(c.spacing.value);
+    state.planeWave.decomposition = c.componentMode.checked ? "components" : "total";
+    state.display.real = c.real.checked;
+    state.display.imaginary = c.imaginary.checked;
+    state.display.magnitude = c.magnitude.checked;
+    state.display.energyValues = c.energyValues.checked;
+    state.display.scatteringObservables = c.scatteringObservables.checked;
+    configurePotentialControls();
+    updateLabels(state,c);
+    c.observablesPanel.hidden = !state.display.scatteringObservables;
     onStateChange();
   }
 
-  [controls.energy, controls.height, controls.thickness].forEach((el) => el.addEventListener("input", syncState));
-  [controls.totalMode, controls.componentMode, controls.real, controls.imaginary, controls.magnitude, controls.energyValues, controls.scatteringObservables]
-    .forEach((el) => el.addEventListener("change", syncState));
+  [c.potentialType,c.energy,c.height,c.thickness,c.spacing,c.totalMode,c.componentMode,c.real,c.imaginary,c.magnitude,c.energyValues,c.scatteringObservables]
+    .forEach(el=>el.addEventListener(el.type === "range" ? "input" : "change",syncState));
 
-  updateControlLabels(state);
-  updateVisibility(state);
+  configurePotentialControls();
+  updateLabels(state,c);
 }
 
-export function updateControlLabels(state) {
-  document.getElementById(ids.energyValue).textContent = state.electron.energyEV.toFixed(1);
-  document.getElementById(ids.heightValue).textContent = state.potential.heightEV.toFixed(1);
-  document.getElementById(ids.thicknessValue).textContent = state.potential.widthNM.toFixed(1);
+function updateLabels(state,c) {
+  c.energyValue.textContent = state.electron.energyEV.toFixed(1);
+  c.heightValue.textContent = state.potential.heightEV.toFixed(1);
+  c.thicknessValue.textContent = state.potential.widthNM.toFixed(1);
+  c.spacingValue.textContent = state.potential.spacingNM.toFixed(1);
 }
 
-export function updateScatteringReadout({ R, T }) {
-  document.getElementById(ids.transmissionOutput).textContent = T.toPrecision(5);
-  document.getElementById(ids.reflectionOutput).textContent = R.toPrecision(5);
-}
-
-function updateVisibility(state) {
-  document.getElementById(ids.observablesPanel).hidden = !state.display.scatteringObservables;
+export function updateScatteringReadout({R,T}) {
+  document.getElementById(ids.reflectionOutput).textContent = R.toExponential(4);
+  document.getElementById(ids.transmissionOutput).textContent = T.toExponential(4);
 }

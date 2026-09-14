@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive quantum scattering and tunneling simulator." />
+  <meta name="description" content="Interactive quantum scattering and tunneling simulator for piecewise-constant potentials." />
   <title>Quantum Tunneling Explorer</title>
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
   <link rel="stylesheet" href="style.css" />
@@ -13,22 +13,39 @@
     <header class="page-header">
       <p class="eyebrow">Introduction to Semiconductor · Quantum Scattering</p>
       <h1>Quantum Tunneling Explorer</h1>
-      <p class="subtitle">Stationary-state scattering from a finite rectangular potential barrier.</p>
+      <p class="subtitle">Stationary-state scattering from piecewise-constant one-dimensional potentials.</p>
     </header>
 
     <section class="control-panel" aria-label="Simulation controls">
       <div class="parameter-grid">
         <div class="control-group">
+          <label for="potential-type">Potential form</label>
+          <select id="potential-type">
+            <option value="barrier" selected>Single barrier</option>
+            <option value="step">Potential step</option>
+            <option value="well">Finite well</option>
+            <option value="doubleBarrier">Double barrier</option>
+          </select>
+        </div>
+
+        <div class="control-group">
           <label for="energy">Electron energy <i>E</i> <span id="val-energy">5.0</span> eV</label>
-          <input type="range" id="energy" min="1" max="20" step="0.1" value="5" />
+          <input type="range" id="energy" min="0.5" max="20" step="0.1" value="5" />
         </div>
-        <div class="control-group">
-          <label for="height">Barrier height <i>V</i><sub>0</sub> <span id="val-height">10.0</span> eV</label>
-          <input type="range" id="height" min="2" max="20" step="0.5" value="10" />
+
+        <div class="control-group" id="height-control">
+          <label for="height"><span id="height-label">Barrier height</span> <i>V</i><sub>0</sub> <span id="val-height">10.0</span> eV</label>
+          <input type="range" id="height" min="0.5" max="20" step="0.5" value="10" />
         </div>
-        <div class="control-group">
-          <label for="thickness">Barrier width <i>L</i> <span id="val-thickness">1.0</span> nm</label>
+
+        <div class="control-group" id="width-control">
+          <label for="thickness"><span id="width-label">Barrier width</span> <i>L</i> <span id="val-thickness">1.0</span> nm</label>
           <input type="range" id="thickness" min="0.1" max="3" step="0.1" value="1.0" />
+        </div>
+
+        <div class="control-group hidden" id="spacing-control">
+          <label for="spacing">Barrier separation <i>d</i> <span id="val-spacing">1.0</span> nm</label>
+          <input type="range" id="spacing" min="0.1" max="4" step="0.1" value="1.0" />
         </div>
       </div>
 
@@ -69,40 +86,22 @@
 
     <section class="visualization-stack">
       <article class="viz-card">
-        <div class="viz-heading">
-          <div>
-            <span class="panel-index">I</span>
-            <h2>Potential / Energy Landscape</h2>
-          </div>
-          <span class="equation-tag">V(x), E</span>
-        </div>
+        <div class="viz-heading"><div><span class="panel-index">I</span><h2>Potential / Energy Landscape</h2></div><span class="equation-tag">V(x), E</span></div>
         <div id="energy-plot" class="plot energy-plot"></div>
       </article>
 
       <article class="viz-card">
-        <div class="viz-heading">
-          <div>
-            <span class="panel-index">II</span>
-            <h2>Complex Wavefunction</h2>
-          </div>
-          <span class="equation-tag">ψ(x,t)</span>
-        </div>
+        <div class="viz-heading"><div><span class="panel-index">II</span><h2>Complex Wavefunction</h2></div><span class="equation-tag">ψ(x,t)</span></div>
         <div id="wavefunction-plot" class="plot wavefunction-plot"></div>
       </article>
 
       <article class="viz-card">
-        <div class="viz-heading">
-          <div>
-            <span class="panel-index">III</span>
-            <h2>Probability Density</h2>
-          </div>
-          <span class="equation-tag">|ψ(x,t)|²</span>
-        </div>
+        <div class="viz-heading"><div><span class="panel-index">III</span><h2>Probability Density</h2></div><span class="equation-tag">|ψ(x,t)|²</span></div>
         <div id="probability-plot" class="plot probability-plot"></div>
       </article>
     </section>
 
-    <footer>Finite rectangular barrier · boundary-matched stationary solution</footer>
+    <footer>Piecewise-constant potential · stationary scattering solution</footer>
   </main>
   <script type="module" src="js/app.js"></script>
 </body>

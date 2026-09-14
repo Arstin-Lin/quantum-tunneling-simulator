@@ -1,71 +1,66 @@
-# Quantum Tunneling Explorer — v0.6 Plane-Wave Interface
+# Quantum Tunneling Explorer — v0.7 Potential Forms
 
-This version builds the first presentation architecture on top of the modular v0.5 codebase.
+v0.7 generalizes the stationary plane-wave solver from one rectangular barrier to several piecewise-constant potentials.
 
-## Visible changes
+## New potential forms
 
-- Three scientific visualization blocks:
-  1. Potential / Energy Landscape: `V(x), E`
-  2. Complex Wavefunction: `psi(x,t)`
-  3. Probability Density: `|psi(x,t)|^2`
-- Plane-wave decomposition selector:
-  - Total state
-  - Components
-- Wavefunction representations:
-  - Real part
-  - Imaginary part
-  - Magnitude
-- Optional energy-value labels
-- Optional `R` and `T` readout
-- Wave-packet choice is visible but intentionally disabled until the numerical propagator is implemented.
+- Potential step
+- Single finite barrier
+- Finite well
+- Double barrier
 
-## Component mode
+The double-barrier mode adds an adjustable inter-barrier spacing `d` and can exhibit resonant transmission as the energy is varied.
 
-The stationary state is separated spatially into:
+## Solver architecture
 
-- incident component in Region I
-- reflected component in Region I
-- boundary-matched barrier-region state in Region II
-- transmitted component in Region III
+Instead of solving one hard-coded barrier with four coefficients, v0.7 propagates the state vector
 
-The probability-density block always shows the physical total-state density `|psi|^2`, including interference.
+```text
+[ psi(x) ]
+[ psi'(x)]
+```
 
-## Physics robustness
+through each constant-potential layer. For a layer of width `d`, the propagation matrix is constructed from the local complex wave number. This formulation works for both propagating and evanescent regions and has a smooth `k -> 0` threshold limit.
 
-The stationary solver now includes the exact threshold form for `E = V0`, where the Region-II solution is linear in `x` rather than oscillatory or exponential. This avoids the singular `q = 0` form of the ordinary basis.
+The left and right asymptotic leads are then matched to incident/reflected and transmitted solutions to obtain `r`, `t`, `R`, and `T`.
 
-`R + T ≈ 1` remains an internal consistency check only and is not displayed.
+`R + T` remains an internal consistency diagnostic only.
+
+## Current UI
+
+The three scientific panels remain:
+
+1. Potential / Energy Landscape
+2. Complex Wavefunction
+3. Probability Density
+
+The wavefunction y-axis is explicitly locked using the time-independent magnitude, preventing visual vibration during animation.
 
 ## Run locally
-
-Because the project uses ES modules:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open:
+Open `http://localhost:8000`.
 
-```text
-http://localhost:8000
-```
+## Suggested Git workflow
 
-## Recommended Git feature-branch workflow
+Create the next feature branch from an updated main branch:
 
 ```bash
-git status
+git switch main
 git pull
-git switch -c feature/plane-wave-interface
+git switch -c feature/potential-forms
 ```
 
-After replacing/testing the files:
+After testing:
 
 ```bash
 git status
 git diff
 git add .
-git commit -m "Add plane-wave interface and three-panel visualization"
-git push -u origin feature/plane-wave-interface
+git status
+git commit -m "Add piecewise potential forms and multilayer solver"
+git push -u origin feature/potential-forms
 ```
-
-After review, merge the branch into `main` on GitHub or locally.
