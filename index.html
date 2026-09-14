@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive quantum scattering and tunneling simulator for piecewise-constant potentials." />
+  <meta name="description" content="Interactive one-dimensional quantum tunneling simulator with stationary plane waves and time-dependent Gaussian wave packets." />
   <title>Quantum Tunneling Explorer</title>
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
   <link rel="stylesheet" href="style.css" />
@@ -13,7 +13,7 @@
     <header class="page-header">
       <p class="eyebrow">Introduction to Semiconductor · Quantum Scattering</p>
       <h1>Quantum Tunneling Explorer</h1>
-      <p class="subtitle">Stationary-state scattering from piecewise-constant one-dimensional potentials.</p>
+      <p class="subtitle">Stationary scattering and time-dependent wave-packet propagation in piecewise-constant one-dimensional potentials.</p>
     </header>
 
     <section class="control-panel" aria-label="Simulation controls">
@@ -29,7 +29,7 @@
         </div>
 
         <div class="control-group">
-          <label for="energy">Electron energy <i>E</i> <span id="val-energy">5.0</span> eV</label>
+          <label for="energy"><span id="energy-label">Electron energy</span> <i>E</i><span id="energy-subscript"></span> <span id="val-energy">5.0</span> eV</label>
           <input type="range" id="energy" min="0.5" max="20" step="0.1" value="5" />
         </div>
 
@@ -47,18 +47,26 @@
           <label for="spacing">Barrier separation <i>d</i> <span id="val-spacing">1.0</span> nm</label>
           <input type="range" id="spacing" min="0.1" max="4" step="0.1" value="1.0" />
         </div>
+
+        <div class="control-group hidden packet-parameter" id="packet-position-control">
+          <label for="packet-position">Initial packet center <i>x</i><sub>0</sub> <span id="val-packet-position">−6.0</span> nm</label>
+          <input type="range" id="packet-position" min="-10" max="-2" step="0.1" value="-6" />
+        </div>
+
+        <div class="control-group hidden packet-parameter" id="packet-sigma-control">
+          <label for="packet-sigma">Packet width <i>σ</i> <span id="val-packet-sigma">0.65</span> nm</label>
+          <input type="range" id="packet-sigma" min="0.25" max="1.50" step="0.05" value="0.65" />
+        </div>
       </div>
 
       <div class="mode-grid">
         <fieldset class="choice-group">
           <legend>Wave form</legend>
           <label><input type="radio" name="wave-form" value="plane" id="wave-plane" checked /> Plane wave</label>
-          <label class="disabled-option" title="Wave-packet propagation is planned for a later version.">
-            <input type="radio" name="wave-form" value="packet" id="wave-packet" disabled /> Wave packet
-          </label>
+          <label><input type="radio" name="wave-form" value="packet" id="wave-packet" /> Wave packet</label>
         </fieldset>
 
-        <fieldset class="choice-group">
+        <fieldset class="choice-group" id="plane-decomposition-group">
           <legend>Plane-wave decomposition</legend>
           <label><input type="radio" name="decomposition" value="total" id="mode-total" checked /> Total state</label>
           <label><input type="radio" name="decomposition" value="components" id="mode-components" /> Components</label>
@@ -74,14 +82,23 @@
         <fieldset class="choice-group">
           <legend>Display</legend>
           <label><input type="checkbox" id="show-energy-values" checked /> Energy values</label>
-          <label><input type="checkbox" id="show-rt" checked /> R / T</label>
+          <label><input type="checkbox" id="show-rt" checked /> Scattering observables</label>
+        </fieldset>
+
+        <fieldset class="choice-group hidden" id="packet-evolution-group">
+          <legend>Wave-packet evolution</legend>
+          <div class="button-row">
+            <button type="button" id="packet-play">Play</button>
+            <button type="button" id="packet-reset" class="secondary-button">Reset</button>
+          </div>
+          <div class="time-readout"><i>t</i> = <span id="packet-time">0.000</span> fs</div>
         </fieldset>
       </div>
     </section>
 
     <section id="scattering-observables" class="observables" aria-label="Scattering observables">
-      <span>R = <strong id="reflection-display">0</strong></span>
-      <span>T = <strong id="transmission-display">0</strong></span>
+      <span><span id="reflection-label">R</span> = <strong id="reflection-display">0</strong></span>
+      <span><span id="transmission-label">T</span> = <strong id="transmission-display">0</strong></span>
     </section>
 
     <section class="visualization-stack">
@@ -101,7 +118,7 @@
       </article>
     </section>
 
-    <footer>Piecewise-constant potential · stationary scattering solution</footer>
+    <footer>Piecewise-constant potentials · stationary scattering + Crank–Nicolson wave-packet propagation</footer>
   </main>
   <script type="module" src="js/app.js"></script>
 </body>
