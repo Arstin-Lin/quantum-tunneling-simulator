@@ -85,3 +85,38 @@ select {
 @media (max-width: 900px) {
   .parameter-grid { grid-template-columns: 1fr; }
 }
+
+/* v0.8 wave-packet controls */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+button {
+  min-height: 36px;
+  padding: 7px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(.96);
+}
+
+.secondary-button {
+  background: #fff;
+  color: var(--accent);
+}
+
+.time-readout {
+  margin-top: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
