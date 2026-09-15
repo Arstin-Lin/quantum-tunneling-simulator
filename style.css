@@ -120,3 +120,86 @@ button:hover {
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* v0.9 cyclic phase-spectrum visualization */
+.phase-spectrum-panel {
+  margin: -4px 18px 14px 76px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.phase-spectrum-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 7px;
+  color: var(--muted);
+  font-size: .80rem;
+  font-weight: 750;
+}
+
+.phase-spectrum-note {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.phase-spectrum-inner {
+  min-width: 0;
+}
+
+.phase-spectrum-canvas {
+  display: block;
+  width: 100%;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.phase-legend {
+  display: grid;
+  grid-template-columns: auto minmax(120px, 220px) auto;
+  align-items: center;
+  justify-content: end;
+  gap: 7px;
+  margin-top: 7px;
+  color: var(--muted);
+  font-family: "Times New Roman", serif;
+  font-size: .77rem;
+}
+
+.phase-legend-bar {
+  height: 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(23, 32, 51, .12);
+}
+
+.phase-legend-bar.full-cycle {
+  background: linear-gradient(
+    90deg,
+    hsl(0 88% 52%),
+    hsl(60 88% 52%),
+    hsl(120 88% 45%),
+    hsl(180 88% 45%),
+    hsl(240 88% 58%),
+    hsl(300 88% 52%),
+    hsl(360 88% 52%)
+  );
+}
+
+@media (max-width: 560px) {
+  .phase-spectrum-panel {
+    margin-left: 64px;
+    margin-right: 12px;
+  }
+
+  .phase-spectrum-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .phase-spectrum-note {
+    white-space: normal;
+  }
+}

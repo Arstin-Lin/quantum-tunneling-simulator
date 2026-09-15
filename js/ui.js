@@ -35,6 +35,7 @@ const ids = {
   real: "show-real",
   imaginary: "show-imag",
   magnitude: "show-magnitude",
+  phase: "show-phase",
   energyValues: "show-energy-values",
   scatteringObservables: "show-rt",
 
@@ -110,6 +111,7 @@ export function bindUI(state, callbacks) {
     state.display.real = c.real.checked;
     state.display.imaginary = c.imaginary.checked;
     state.display.magnitude = c.magnitude.checked;
+    state.display.phase = c.phase.checked;
     state.display.energyValues = c.energyValues.checked;
     state.display.scatteringObservables = c.scatteringObservables.checked;
 
@@ -139,6 +141,7 @@ export function bindUI(state, callbacks) {
     c.real,
     c.imaginary,
     c.magnitude,
+    c.phase,
     c.energyValues,
     c.scatteringObservables,
   ].forEach((element) => {

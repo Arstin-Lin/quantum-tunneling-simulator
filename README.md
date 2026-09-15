@@ -1,128 +1,128 @@
-# Quantum Tunneling Explorer — v0.8 Wave Packet Mode
+# Quantum Tunneling Explorer — v0.9 Phase Spectrum
 
-v0.8 adds genuinely time-dependent quantum dynamics while preserving the v0.7 stationary plane-wave solver and all four piecewise-constant potential forms.
+v0.9 adds a cyclic phase visualization for the complex wavefunction while preserving the v0.8 stationary and time-dependent solvers.
 
-## New in v0.8
+## New in v0.9
 
-### Wave-form selector
+### Cyclic phase spectrum
 
-The simulator now supports two distinct solvers:
-
-- **Plane wave** — stationary scattering solution
-- **Wave packet** — numerical time evolution of a localized Gaussian packet
-
-The two modes share the same potential model and three visualization panels.
-
-### Gaussian wave packet
-
-The initial state is
+The complex wavefunction can be written as
 
 ```text
-ψ(x,0) ∝ exp[-(x-x0)^2/(4σ^2)] exp(i k0 x)
+ψ(x,t) = |ψ(x,t)| exp[i φ(x,t)]
 ```
 
-where:
-
-- `x0` is the initial packet center
-- `σ` is the spatial standard deviation of `|ψ|²`
-- `k0` is set by the selected central kinetic energy `E0`
+with
 
 ```text
-E0 = ħ² k0² / (2m)
+φ(x,t) = arg ψ(x,t) = atan2(Im ψ, Re ψ)
 ```
 
-Because a localized packet has a finite momentum spread, `E0` is the carrier/central kinetic energy rather than the exact expectation value of the total energy.
+The phase is periodic, so the simulator does **not** plot phase as an ordinary vertical line. Instead, v0.9 adds a horizontal cyclic color spectrum inside Panel II.
 
-### Time-dependent propagation
-
-The wave packet is evolved with the one-dimensional time-dependent Schrödinger equation
+The hue map wraps continuously across
 
 ```text
-iħ ∂ψ/∂t = [-(ħ²/2m) ∂²/∂x² + V(x)] ψ
+−π  →  0  →  +π
 ```
 
-using a **Crank–Nicolson finite-difference propagator**.
+and the colors at `−π` and `+π` are identical, reflecting the periodic nature of phase.
 
-The implementation uses:
+### Amplitude-weighted visibility
 
-- `ħ = 0.6582119569 eV fs`
-- `ħ²/(2m_e) = 0.0380998212 eV nm²`
-- 900 spatial grid points
-- a small internal time step (`0.003 fs` by default)
-- multiple numerical steps per displayed frame
+Phase becomes physically ill-defined when the wavefunction amplitude approaches zero. To avoid displaying a visually strong but meaningless phase in those regions, the phase-spectrum brightness is weighted by `|ψ|`.
 
-Crank–Nicolson is unitary for the Hermitian finite-grid Hamiltonian and is unconditionally stable. A weak absorbing mask is used only near the outer grid boundaries to suppress artificial reflections from the finite simulation box.
+Therefore:
 
-### Play / Pause / Reset
+- large `|ψ|` → saturated, easy-to-read phase color
+- small `|ψ|` → color fades toward white
+- `|ψ| ≈ 0` → phase is effectively hidden
 
-Wave-packet mode adds:
+This is especially useful for Gaussian wave packets because the phase color is visible primarily where the packet actually has appreciable probability amplitude.
 
-- **Play / Pause**
-- **Reset**
-- simulation-time readout in femtoseconds
+### Plane-wave component mode
 
-Changing a physical parameter reconstructs the initial packet and pauses the propagation.
-
-### Packet observables
-
-For stationary plane waves the observable panel remains
+When the line plot is set to **Components**, the phase spectrum still represents the **total state**
 
 ```text
-R, T
+ψtotal = ψincident + ψreflected + ψinterior/transmitted
 ```
 
-For wave packets it becomes
+rather than trying to combine several unrelated component phases into a single strip. The interface labels this explicitly.
 
-```text
-P_L(t), P_R(t)
-```
+### Wave-packet phase evolution
 
-where the quantities are the instantaneous integrated probability in the left and right asymptotic regions.
+In Wave packet mode, the spectrum is calculated directly from the time-dependent Crank–Nicolson state at every displayed frame.
 
-They should not be interpreted as final `R` and `T` until the scattered packets have separated from the interaction region. During the interaction, probability may still occupy the potential region.
+This makes effects such as propagation, phase winding, reflection, interference, and transmitted-packet phase evolution directly visible.
 
-## Potential forms retained from v0.7
+## Wavefunction representations
+
+Panel II now supports:
+
+- `Re[ψ]`
+- `Im[ψ]`
+- `|ψ|`
+- **Phase spectrum** — new in v0.9
+
+The phase spectrum can be enabled independently of the three line representations.
+
+## Features retained from v0.8
+
+### Wave forms
+
+- stationary Plane wave
+- time-dependent Gaussian Wave packet
+
+### Piecewise-constant potentials
 
 - Potential step
 - Single barrier
 - Finite well
 - Double barrier
 
-The same `potentials.js` profile is used by both the stationary and time-dependent solvers.
+### Three main visualization blocks
 
-## Three visualization panels
+1. `V(x)` and `E` / `E0`
+2. complex wavefunction `ψ(x,t)` plus optional phase spectrum
+3. probability density `|ψ(x,t)|²`
 
-### I. Potential / Energy Landscape
-
-Shows `V(x)` together with:
-
-- `E` for plane-wave mode
-- central kinetic energy `E0` for wave-packet mode
-
-### II. Complex Wavefunction
-
-Selectable representations:
-
-- `Re[ψ]`
-- `Im[ψ]`
-- `|ψ|`
-
-The wave-packet y-axis is intentionally kept fixed during propagation. It can expand if a larger amplitude is encountered, but it does not shrink frame-by-frame.
-
-### III. Probability Density
-
-Shows
+### Stationary observables
 
 ```text
-|ψ(x,t)|²
+R, T
 ```
 
-For the normalized wave packet the vertical unit is `nm^-1`.
+### Wave-packet observables
+
+```text
+P_L(t), P_R(t)
+```
+
+These become asymptotic reflection/transmission probabilities only after the scattered packets have separated from the interaction region.
+
+## Numerical methods
+
+### Plane wave
+
+`stationarySolver.js` handles boundary-matched scattering through arbitrary piecewise-constant layers.
+
+### Wave packet
+
+`wavePacketSolver.js` solves
+
+```text
+iħ ∂ψ/∂t = [-(ħ²/2m) ∂²/∂x² + V(x)] ψ
+```
+
+using the Crank–Nicolson finite-difference method.
+
+The phase-spectrum feature is a rendering layer only; it does not modify either quantum solver.
 
 ## Project structure
 
 ```text
-quantum_tunneling_v0.8_wave_packet/
+quantum_tunneling_v0.9_phase_spectrum/
 ├── index.html
 ├── style.css
 ├── README.md
@@ -133,26 +133,13 @@ quantum_tunneling_v0.8_wave_packet/
     ├── complex.js
     ├── potentials.js
     ├── stationarySolver.js
-    ├── wavePacketSolver.js   ← new in v0.8
-    └── renderer.js
+    ├── wavePacketSolver.js
+    └── renderer.js          ← phase-spectrum rendering added here
 ```
-
-### `wavePacketSolver.js`
-
-Responsible for:
-
-- initializing the normalized Gaussian state
-- constructing the finite-difference Hamiltonian
-- precomputing the Crank–Nicolson tridiagonal system
-- advancing the state in time
-- weak edge absorption
-- integrated left/interior/right probabilities
-
-The plotting code remains in `renderer.js`; numerical quantum mechanics remains outside the UI layer.
 
 ## Run locally
 
-Because the project uses ES modules, use a local web server:
+Because the project uses ES modules, serve it through a local web server:
 
 ```bash
 python3 -m http.server 8000
@@ -164,52 +151,66 @@ Then open:
 http://localhost:8000
 ```
 
+## Suggested experiments
+
+### 1. Plane-wave phase winding
+
+Use a single barrier and enable only:
+
+```text
+Phase spectrum
+```
+
+Then vary `E` and observe how the spatial phase gradient changes.
+
+### 2. Incident/reflected interference
+
+Use Plane wave → Components and enable the phase spectrum. The line plot separates the components, while the spectrum continues to show the phase of the total state.
+
+### 3. Wave-packet propagation
+
+Switch to Wave packet, enable Phase spectrum, press Play, and watch the colored phase pattern move with the packet.
+
+### 4. Low-amplitude regions
+
+Observe the packet tails: the phase colors fade out because `|ψ|` is small there. This is intentional and prevents over-interpreting phase where the wavefunction is nearly zero.
+
 ## Suggested Git workflow
 
-Start from the current main branch:
+Start from the current `main` branch:
 
 ```bash
 git switch main
 git pull
 ```
 
-Create the feature branch:
+Create the new feature branch:
 
 ```bash
-git switch -c feature/wave-packet
+git switch -c feature/phase-spectrum
 ```
 
-After copying/testing v0.8:
+After copying and testing v0.9:
 
 ```bash
 git status
 git diff
 git add .
 git status
-git commit -m "Add Crank-Nicolson wave-packet propagation"
-git push -u origin feature/wave-packet
+git commit -m "Add cyclic wavefunction phase spectrum"
+git push -u origin feature/phase-spectrum
 ```
 
 Then open a Pull Request into `main`.
 
-## Numerical validation performed
+## Next milestone
 
-The packet was checked for:
+The planned v1.0 milestone can now focus on product-level polish and semiconductor framing rather than another solver rewrite. Possible goals include:
 
-- normalization before interaction
-- correct positive group-velocity motion
-- operation with barrier, step, well, and double-barrier profiles
-- strong reflection for `E0 < V0`
-- partial reflection/transmission for `E0 > V0`
+- interface cleanup and responsive polish
+- concise technical help/tooltips
+- preset semiconductor examples
+- clearer parameter grouping and units
+- presentation-ready explanatory notes
 
-The default `E0 = 5 eV`, `V0 = 10 eV`, `L = 1 nm` single-barrier case becomes almost completely reflected, consistent with the extremely small stationary transmission for that barrier.
-
-## Planned v0.9
-
-The next planned feature remains the **phase-spectrum representation**:
-
-```text
-ψ = |ψ| exp(iφ)
-```
-
-with phase `φ = arg ψ` encoded using a cyclic color map.
+Dispersion diagnostics such as `|ψ̃(k)|²`, packet-width evolution, `E(k)`, group velocity, and effective mass can remain a post-v1.0 extension.

@@ -29,6 +29,7 @@ export const state = {
     real: true,
     imaginary: true,
     magnitude: true,
+    phase: false,
     energyValues: true,
     scatteringObservables: true,
   },
