@@ -3,18 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive one-dimensional quantum tunneling simulator with stationary plane waves, time-dependent Gaussian wave packets, and cyclic phase visualization." />
-  <title>Quantum Tunneling Explorer</title>
+  <meta name="description" content="Interactive one-dimensional quantum tunneling simulator with stationary scattering, time-dependent Gaussian wave packets, piecewise-constant potentials, and cyclic phase visualization." />
+  <title>Quantum Tunneling Explorer · v1.0</title>
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <main class="container">
     <header class="page-header">
-      <p class="eyebrow">Introduction to Semiconductor · Quantum Scattering</p>
-      <h1>Quantum Tunneling Explorer</h1>
-      <p class="subtitle">Stationary scattering and time-dependent wave-packet propagation in piecewise-constant one-dimensional potentials.</p>
+      <div class="header-line">
+        <div>
+          <p class="eyebrow">Introduction to Semiconductor · Quantum Scattering</p>
+          <h1>Quantum Tunneling Explorer</h1>
+        </div>
+        <span class="version-badge">v1.0</span>
+      </div>
+      <p class="subtitle">Stationary scattering and time-dependent wave-packet propagation in idealized one-dimensional semiconductor potential structures.</p>
+      <div class="model-badges" aria-label="Model summary">
+        <span>1D model</span>
+        <span>piecewise-constant V(x)</span>
+        <span>electron mass m<sub>e</sub></span>
+        <span>open-line numerical approximation</span>
+      </div>
     </header>
+
+    <section class="preset-panel" aria-label="Example scenarios">
+      <div class="preset-copy">
+        <span class="section-kicker">Presentation presets</span>
+        <strong>Start from a physically meaningful scattering scenario</strong>
+        <span id="preset-note" class="preset-note">Manual parameter control.</span>
+      </div>
+      <div class="preset-control">
+        <label for="scenario-preset">Scenario</label>
+        <select id="scenario-preset">
+          <option value="custom" selected>Custom</option>
+          <option value="directTunneling">Direct tunneling · wave packet</option>
+          <option value="aboveBarrier">Above-barrier reflection · wave packet</option>
+          <option value="quantumWell">Finite quantum well · plane wave</option>
+          <option value="resonantDoubleBarrier">Resonant double barrier · plane wave</option>
+        </select>
+      </div>
+    </section>
 
     <section class="control-panel" aria-label="Simulation controls">
       <div class="parameter-grid">
@@ -86,19 +115,21 @@
           <label><input type="checkbox" id="show-rt" checked /> Scattering observables</label>
         </fieldset>
 
-        <fieldset class="choice-group hidden" id="packet-evolution-group">
+        <fieldset class="choice-group hidden evolution-group" id="packet-evolution-group">
           <legend>Wave-packet evolution</legend>
           <div class="button-row">
             <button type="button" id="packet-play">Play</button>
             <button type="button" id="packet-reset" class="secondary-button">Reset</button>
           </div>
           <div class="time-readout"><i>t</i> = <span id="packet-time">0.000</span> fs</div>
+          <div id="packet-domain" class="domain-readout">Adaptive numerical window</div>
         </fieldset>
       </div>
     </section>
 
-    <section id="scattering-observables" class="observables" aria-label="Scattering observables">
+    <section id="scattering-observables" class="observables" aria-label="Scattering observables" aria-live="polite">
       <span><span id="reflection-label">R</span> = <strong id="reflection-display">0</strong></span>
+      <span id="interior-observable" class="hidden"><span id="interior-label">P<sub>int</sub>(t)</span> = <strong id="interior-display">0</strong></span>
       <span><span id="transmission-label">T</span> = <strong id="transmission-display">0</strong></span>
     </section>
 
@@ -134,7 +165,16 @@
       </article>
     </section>
 
-    <footer>Piecewise-constant potentials · stationary scattering + Crank–Nicolson wave-packet propagation · cyclic phase visualization</footer>
+    <details class="model-note">
+      <summary>Model scope and semiconductor interpretation</summary>
+      <div class="model-note-grid">
+        <p><strong>Step:</strong> idealized band-offset interface. <strong>Barrier:</strong> thin tunnel barrier. <strong>Well:</strong> quantum-well region. <strong>Double barrier:</strong> idealized resonant-tunneling structure.</p>
+        <p>The present model uses one spatial dimension, piecewise-constant potentials, and the free electron mass <i>m</i><sub>e</sub>. It does not yet include material-dependent effective mass, self-consistent electrostatics, inelastic scattering, or many-body effects.</p>
+        <p>Wave-packet propagation approximates the whole line <i>x</i> ∈ ℝ with an adaptive finite computational window and absorbing edge layers. The numerical window is shown beside the playback controls.</p>
+      </div>
+    </details>
+
+    <footer>v1.0 · piecewise-constant potentials · stationary scattering · Crank–Nicolson wave packets · cyclic phase visualization</footer>
   </main>
   <script type="module" src="js/app.js"></script>
 </body>

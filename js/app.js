@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import {
   bindUI,
+  updatePacketDomainReadout,
   updatePacketReadout,
   updatePlaybackUIFromState,
   updateScatteringReadout,
@@ -44,6 +45,7 @@ function rebuildPhysics() {
 
     state.wavePacket.running = false;
     state.wavePacket.timeFS = 0;
+    updatePacketDomainReadout(packetSimulation);
     updatePacketObservables();
   }
 

@@ -1,4 +1,9 @@
+import { PRESETS } from "./presets.js";
+
 const ids = {
+  preset: "scenario-preset",
+  presetNote: "preset-note",
+
   potentialType: "potential-type",
   energy: "energy",
   height: "height",
@@ -41,6 +46,8 @@ const ids = {
 
   observablesPanel: "scattering-observables",
   reflectionLabel: "reflection-label",
+  interiorObservable: "interior-observable",
+  interiorOutput: "interior-display",
   transmissionLabel: "transmission-label",
   transmissionOutput: "transmission-display",
   reflectionOutput: "reflection-display",
@@ -48,6 +55,7 @@ const ids = {
   packetPlay: "packet-play",
   packetReset: "packet-reset",
   packetTime: "packet-time",
+  packetDomain: "packet-domain",
 };
 
 export function bindUI(state, callbacks) {
@@ -79,6 +87,7 @@ export function bindUI(state, callbacks) {
     c.packetSigmaControl.classList.toggle("hidden", !isPacket);
     c.packetEvolutionGroup.classList.toggle("hidden", !isPacket);
     c.planeDecompositionGroup.classList.toggle("hidden", isPacket);
+    c.interiorObservable.classList.toggle("hidden", !isPacket);
 
     c.energyLabel.textContent = isPacket ? "Central kinetic energy" : "Electron energy";
     c.energySubscript.textContent = isPacket ? "₀" : "";
@@ -89,7 +98,7 @@ export function bindUI(state, callbacks) {
     updatePlaybackUI(state, c);
   }
 
-  function syncPhysicalState() {
+  function syncPhysicalState({ markCustom = true } = {}) {
     state.waveForm = c.packetWave.checked ? "packet" : "plane";
     state.electron.energyEV = Number(c.energy.value);
     state.potential.type = c.potentialType.value;
@@ -98,6 +107,11 @@ export function bindUI(state, callbacks) {
     state.potential.spacingNM = Number(c.spacing.value);
     state.wavePacket.initialPositionNM = Number(c.packetPosition.value);
     state.wavePacket.sigmaNM = Number(c.packetSigma.value);
+
+    if (markCustom) {
+      c.preset.value = "custom";
+      c.presetNote.textContent = "Manual parameter control.";
+    }
 
     configurePotentialControls();
     configureWaveFormControls();
@@ -120,6 +134,39 @@ export function bindUI(state, callbacks) {
     callbacks.onDisplayChange();
   }
 
+  function applyPreset(presetKey) {
+    if (presetKey === "custom") {
+      c.presetNote.textContent = "Manual parameter control.";
+      return;
+    }
+
+    const preset = PRESETS[presetKey];
+    if (!preset) {
+      return;
+    }
+
+    c.potentialType.value = preset.potential.type;
+    c.energy.value = String(preset.energyEV);
+    c.height.value = String(preset.potential.heightEV);
+    c.thickness.value = String(preset.potential.widthNM);
+    c.spacing.value = String(preset.potential.spacingNM);
+
+    c.planeWave.checked = preset.waveForm === "plane";
+    c.packetWave.checked = preset.waveForm === "packet";
+
+    if (preset.packet) {
+      c.packetPosition.value = String(preset.packet.initialPositionNM);
+      c.packetSigma.value = String(preset.packet.sigmaNM);
+    }
+
+    c.presetNote.textContent = preset.description;
+    syncPhysicalState({ markCustom: false });
+  }
+
+  c.preset.addEventListener("change", () => {
+    applyPreset(c.preset.value);
+  });
+
   [
     c.potentialType,
     c.energy,
@@ -132,7 +179,7 @@ export function bindUI(state, callbacks) {
     c.packetWave,
   ].forEach((element) => {
     const eventName = element.type === "range" ? "input" : "change";
-    element.addEventListener(eventName, syncPhysicalState);
+    element.addEventListener(eventName, () => syncPhysicalState({ markCustom: true }));
   });
 
   [
@@ -172,13 +219,23 @@ export function updatePlaybackUIFromState(state) {
   time.textContent = state.wavePacket.timeFS.toFixed(3);
 }
 
+export function updatePacketDomainReadout(simulation) {
+  const domain = document.getElementById(ids.packetDomain);
+  const { xMinNM, xMaxNM, gridPoints, absorberWidthNM } = simulation.domain;
+
+  domain.textContent =
+    `x ∈ [${formatSigned(xMinNM, 1)}, ${formatSigned(xMaxNM, 1)}] nm · ` +
+    `${gridPoints} grid points · ${absorberWidthNM.toFixed(1)} nm absorbing edges`;
+}
+
 export function updateScatteringReadout({ R, T }) {
   document.getElementById(ids.reflectionOutput).textContent = R.toExponential(4);
   document.getElementById(ids.transmissionOutput).textContent = T.toExponential(4);
 }
 
-export function updatePacketReadout({ left, right }) {
+export function updatePacketReadout({ left, interior, right }) {
   document.getElementById(ids.reflectionOutput).textContent = left.toFixed(4);
+  document.getElementById(ids.interiorOutput).textContent = interior.toFixed(4);
   document.getElementById(ids.transmissionOutput).textContent = right.toFixed(4);
 }
 
@@ -198,5 +255,5 @@ function updatePlaybackUI(state, c) {
 
 function formatSigned(value, digits) {
   const magnitude = Math.abs(value).toFixed(digits);
-  return value < 0 ? `−${magnitude}` : magnitude;
+  return value < 0 ? `−${magnitude}` : `+${magnitude}`;
 }

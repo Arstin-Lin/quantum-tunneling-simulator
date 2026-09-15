@@ -6,11 +6,20 @@ import { potentialAt } from "./potentials.js";
 const HBAR_EV_FS = 0.6582119569;
 const KINETIC_COEFF_EV_NM2 = 0.0380998212;
 
-const GRID_POINTS = 900;
-const LEFT_MARGIN_NM = 12;
-const RIGHT_MARGIN_NM = 12;
-const ABSORBING_FRACTION = 0.10;
-const ABSORBING_STRENGTH = 0.003;
+// v1.0: choose the numerical window and grid resolution from the physical setup.
+// The calculation still uses a finite box, but the box is deliberately much larger
+// than the interaction region and terminates in absorbing layers to approximate x ∈ R.
+const TARGET_DX_NM = 0.028;
+const MIN_GRID_POINTS = 1201;
+const MAX_GRID_POINTS = 2401;
+const LEFT_FREE_MARGIN_NM = 18;
+const RIGHT_FREE_MARGIN_NM = 24;
+const PACKET_SIGMA_MARGIN = 10;
+const EXTRA_LEFT_BUFFER_NM = 4;
+const ABSORBING_FRACTION = 0.12;
+const MIN_ABSORBER_WIDTH_NM = 3.5;
+const MAX_ABSORBER_WIDTH_NM = 6.0;
+const ABSORBING_STRENGTH = 0.0035;
 
 export function createWavePacketSimulation({
   energyEV,
@@ -19,19 +28,23 @@ export function createWavePacketSimulation({
   sigmaNM,
   dtFS,
 }) {
-  const structureRight = Math.max(profile.totalWidthNM, 0);
-  const xMin = Math.min(-LEFT_MARGIN_NM, initialPositionNM - 6 * sigmaNM);
-  const xMax = Math.max(structureRight + RIGHT_MARGIN_NM, 12);
-  const dx = (xMax - xMin) / (GRID_POINTS - 1);
+  const domain = chooseNumericalDomain({
+    profile,
+    initialPositionNM,
+    sigmaNM,
+  });
 
-  const x = new Float64Array(GRID_POINTS);
-  const potential = new Float64Array(GRID_POINTS);
-  const re = new Float64Array(GRID_POINTS);
-  const im = new Float64Array(GRID_POINTS);
+  const { xMinNM: xMin, xMaxNM: xMax, gridPoints } = domain;
+  const dx = (xMax - xMin) / (gridPoints - 1);
+
+  const x = new Float64Array(gridPoints);
+  const potential = new Float64Array(gridPoints);
+  const re = new Float64Array(gridPoints);
+  const im = new Float64Array(gridPoints);
 
   const k0 = Math.sqrt(Math.max(energyEV, 1e-9) / KINETIC_COEFF_EV_NM2);
 
-  for (let i = 0; i < GRID_POINTS; i += 1) {
+  for (let i = 0; i < gridPoints; i += 1) {
     const position = xMin + i * dx;
     x[i] = position;
     potential[i] = potentialAt(position, profile);
@@ -53,7 +66,11 @@ export function createWavePacketSimulation({
     dtFS,
   });
 
-  const absorbingMask = buildAbsorbingMask(GRID_POINTS);
+  const absorbingMask = buildAbsorbingMask({
+    length: gridPoints,
+    dx,
+    absorberWidthNM: domain.absorberWidthNM,
+  });
 
   const initialMaxAmplitude = maxAmplitude(re, im);
   const initialMaxDensity = initialMaxAmplitude ** 2;
@@ -73,6 +90,7 @@ export function createWavePacketSimulation({
     k0,
     propagator,
     absorbingMask,
+    domain,
     amplitudeLimit: roundedAxisLimit(1.35 * initialMaxAmplitude, 0.25),
     densityLimit: roundedAxisLimit(1.35 * initialMaxDensity, 0.25),
   };
@@ -333,9 +351,45 @@ function crankNicolsonStep(simulation) {
   }
 }
 
-function buildAbsorbingMask(length) {
+function chooseNumericalDomain({ profile, initialPositionNM, sigmaNM }) {
+  const structureRight = Math.max(profile.totalWidthNM, 0);
+
+  const xMinNM = Math.min(
+    -LEFT_FREE_MARGIN_NM,
+    initialPositionNM - PACKET_SIGMA_MARGIN * sigmaNM - EXTRA_LEFT_BUFFER_NM,
+  );
+
+  const xMaxNM = structureRight + Math.max(
+    RIGHT_FREE_MARGIN_NM,
+    PACKET_SIGMA_MARGIN * sigmaNM + 8,
+  );
+
+  const widthNM = xMaxNM - xMinNM;
+  let gridPoints = Math.ceil(widthNM / TARGET_DX_NM) + 1;
+  gridPoints = Math.max(MIN_GRID_POINTS, Math.min(MAX_GRID_POINTS, gridPoints));
+
+  // An odd number of samples gives a convenient central grid point and keeps
+  // changes in the adaptive grid less visually abrupt.
+  if (gridPoints % 2 === 0) {
+    gridPoints = Math.min(MAX_GRID_POINTS, gridPoints + 1);
+  }
+
+  const absorberWidthNM = Math.min(
+    MAX_ABSORBER_WIDTH_NM,
+    Math.max(MIN_ABSORBER_WIDTH_NM, ABSORBING_FRACTION * widthNM),
+  );
+
+  return {
+    xMinNM,
+    xMaxNM,
+    gridPoints,
+    absorberWidthNM,
+  };
+}
+
+function buildAbsorbingMask({ length, dx, absorberWidthNM }) {
   const mask = new Float64Array(length);
-  const edgePoints = Math.max(8, Math.floor(length * ABSORBING_FRACTION));
+  const edgePoints = Math.max(12, Math.floor(absorberWidthNM / dx));
 
   mask.fill(1);
 
