@@ -58,8 +58,9 @@ export function renderWavePacketSimulation({ state, simulation }) {
 function sampleStationaryState(state, solution) {
   const profile = solution.profile;
   const extent = Math.max(profile.totalWidthNM, 0);
-  const xMin = -2.5;
-  const xMax = extent + 2.5;
+  const leadExtent = Math.max(4.0, Math.min(8.0, 3.0 + 0.75 * extent));
+  const xMin = -leadExtent;
+  const xMax = extent + leadExtent;
   const dx = 0.015;
 
   const x = [];
@@ -436,9 +437,9 @@ function renderPacketWavefunctionPanel(state, simulation) {
     "wavefunction",
     traces,
     {
-
+      // The Crank–Nicolson solver mutates re/im arrays in place. datarevision
+      // tells Plotly that their contents changed even when the array identity did not.
       datarevision: simulation.timeFS,
-      
       xaxis: commonXAxis(
         simulation.x[0],
         simulation.x[simulation.x.length - 1],
@@ -563,6 +564,7 @@ function renderPacketProbabilityPanel(simulation) {
     "probability",
     [probabilityTrace(simulation.x, density)],
     {
+      datarevision: simulation.timeFS,
       xaxis: commonXAxis(
         simulation.x[0],
         simulation.x[simulation.x.length - 1],
