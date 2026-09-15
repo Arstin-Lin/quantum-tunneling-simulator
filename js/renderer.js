@@ -31,6 +31,7 @@ export function renderStationarySimulation({ state, solution }) {
   });
 
   renderStationaryWavefunctionPanel(state, sample);
+  renderStationaryPhaseSpectrum(state, sample);
   renderStationaryProbabilityPanel(sample);
 }
 
@@ -50,6 +51,7 @@ export function renderWavePacketSimulation({ state, simulation }) {
   });
 
   renderPacketWavefunctionPanel(state, simulation);
+  renderPacketPhaseSpectrum(state, simulation);
   renderPacketProbabilityPanel(simulation);
 }
 
@@ -274,6 +276,118 @@ function renderStationaryWavefunctionPanel(state, data) {
   );
 }
 
+
+function renderStationaryPhaseSpectrum(state, data) {
+  const panel = document.getElementById("phase-spectrum-panel");
+  panel.classList.toggle("hidden", !state.display.phase);
+
+  if (!state.display.phase) {
+    return;
+  }
+
+  const title = document.getElementById("phase-spectrum-title");
+  const note = document.getElementById("phase-spectrum-note");
+
+  title.textContent =
+    state.planeWave.decomposition === "components"
+      ? "Phase spectrum · arg ψtotal(x,t)"
+      : "Phase spectrum · arg ψ(x,t)";
+
+  note.textContent =
+    state.planeWave.decomposition === "components"
+      ? "total state · brightness weighted by |ψ|"
+      : "brightness weighted by |ψ|";
+
+  const re = new Float64Array(data.total.length);
+  const im = new Float64Array(data.total.length);
+
+  for (let i = 0; i < data.total.length; i += 1) {
+    re[i] = data.total[i].re;
+    im[i] = data.total[i].im;
+  }
+
+  renderPhaseSpectrumCanvas(re, im);
+}
+
+function renderPacketPhaseSpectrum(state, simulation) {
+  const panel = document.getElementById("phase-spectrum-panel");
+  panel.classList.toggle("hidden", !state.display.phase);
+
+  if (!state.display.phase) {
+    return;
+  }
+
+  document.getElementById("phase-spectrum-title").textContent =
+    "Phase spectrum · arg ψ(x,t)";
+
+  document.getElementById("phase-spectrum-note").textContent =
+    "brightness weighted by |ψ|";
+
+  renderPhaseSpectrumCanvas(simulation.re, simulation.im);
+}
+
+function renderPhaseSpectrumCanvas(re, im) {
+  const canvas = document.getElementById("phase-spectrum-canvas");
+  const rect = canvas.getBoundingClientRect();
+  const cssWidth = Math.max(1, Math.floor(rect.width));
+  const cssHeight = Math.max(1, Math.floor(rect.height || 34));
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+  const pixelWidth = Math.round(cssWidth * dpr);
+  const pixelHeight = Math.round(cssHeight * dpr);
+
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
+
+  const ctx = canvas.getContext("2d");
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cssWidth, cssHeight);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, cssWidth, cssHeight);
+
+  let maxAmplitude = 0;
+
+  for (let i = 0; i < re.length; i += 1) {
+    maxAmplitude = Math.max(
+      maxAmplitude,
+      Math.hypot(re[i], im[i]),
+    );
+  }
+
+  if (maxAmplitude <= 1e-15) {
+    return;
+  }
+
+  for (let px = 0; px < cssWidth; px += 1) {
+    const fraction = cssWidth === 1 ? 0 : px / (cssWidth - 1);
+    const index = Math.min(
+      re.length - 1,
+      Math.round(fraction * (re.length - 1)),
+    );
+
+    const amplitude = Math.hypot(re[index], im[index]);
+    const phase = Math.atan2(im[index], re[index]);
+
+    // Hue is cyclic: -π and +π map to the same color.
+    const hue = ((phase + Math.PI) / (2 * Math.PI)) * 360;
+
+    // Phase is not visually meaningful where |ψ| is nearly zero.
+    // Fade those regions toward the white background.
+    const normalized = Math.min(
+      1,
+      amplitude / (0.20 * maxAmplitude),
+    );
+
+    const visibility =
+      normalized * normalized * (3 - 2 * normalized);
+
+    ctx.fillStyle = `hsla(${hue}, 88%, 50%, ${visibility})`;
+    ctx.fillRect(px, 0, 1.2, cssHeight);
+  }
+}
+
 function renderPacketWavefunctionPanel(state, simulation) {
   const traces = [];
   const magnitude = new Float64Array(simulation.re.length);
@@ -322,6 +436,9 @@ function renderPacketWavefunctionPanel(state, simulation) {
     "wavefunction",
     traces,
     {
+
+      datarevision: simulation.timeFS,
+      
       xaxis: commonXAxis(
         simulation.x[0],
         simulation.x[simulation.x.length - 1],

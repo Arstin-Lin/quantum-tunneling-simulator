@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive one-dimensional quantum tunneling simulator with stationary plane waves and time-dependent Gaussian wave packets." />
+  <meta name="description" content="Interactive one-dimensional quantum tunneling simulator with stationary plane waves, time-dependent Gaussian wave packets, and cyclic phase visualization." />
   <title>Quantum Tunneling Explorer</title>
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
   <link rel="stylesheet" href="style.css" />
@@ -77,6 +77,7 @@
           <label><input type="checkbox" id="show-real" checked /> Re[ψ]</label>
           <label><input type="checkbox" id="show-imag" checked /> Im[ψ]</label>
           <label><input type="checkbox" id="show-magnitude" checked /> |ψ|</label>
+          <label><input type="checkbox" id="show-phase" /> Phase spectrum</label>
         </fieldset>
 
         <fieldset class="choice-group">
@@ -110,6 +111,21 @@
       <article class="viz-card">
         <div class="viz-heading"><div><span class="panel-index">II</span><h2>Complex Wavefunction</h2></div><span class="equation-tag">ψ(x,t)</span></div>
         <div id="wavefunction-plot" class="plot wavefunction-plot"></div>
+
+        <div id="phase-spectrum-panel" class="phase-spectrum-panel hidden" aria-label="Wavefunction phase spectrum">
+          <div class="phase-spectrum-heading">
+            <span id="phase-spectrum-title">Phase spectrum · arg ψ(x,t)</span>
+            <span id="phase-spectrum-note" class="phase-spectrum-note">brightness weighted by |ψ|</span>
+          </div>
+          <div class="phase-spectrum-inner">
+            <canvas id="phase-spectrum-canvas" class="phase-spectrum-canvas"></canvas>
+            <div class="phase-legend" aria-hidden="true">
+              <span>−π</span>
+              <div class="phase-legend-bar full-cycle"></div>
+              <span>+π</span>
+            </div>
+          </div>
+        </div>
       </article>
 
       <article class="viz-card">
@@ -118,7 +134,7 @@
       </article>
     </section>
 
-    <footer>Piecewise-constant potentials · stationary scattering + Crank–Nicolson wave-packet propagation</footer>
+    <footer>Piecewise-constant potentials · stationary scattering + Crank–Nicolson wave-packet propagation · cyclic phase visualization</footer>
   </main>
   <script type="module" src="js/app.js"></script>
 </body>
