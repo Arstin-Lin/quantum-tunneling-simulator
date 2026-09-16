@@ -7,6 +7,15 @@ export function buildPotentialProfile(potentialState) {
   const d = potentialState.spacingNM;
 
   switch (potentialState.type) {
+    case "free":
+      return {
+        type: "free",
+        leftPotentialEV: 0,
+        rightPotentialEV: 0,
+        layers: [],
+        totalWidthNM: 0,
+      };
+
     case "step":
       return {
         type: "step",

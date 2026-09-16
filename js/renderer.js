@@ -2,11 +2,15 @@ import { abs, abs2, expI, mul } from "./complex.js";
 import { potentialAt } from "./potentials.js";
 import { evaluateStationaryState } from "./stationarySolver.js";
 import { wavePacketDensity } from "./wavePacketSolver.js";
+import { dispersionEnergyEV } from "./dispersionAnalysis.js";
 
 const initialized = {
   energy: false,
   wavefunction: false,
   probability: false,
+  dispersionHistory: false,
+  momentumSpectrum: false,
+  dispersionRelation: false,
 };
 
 function timeRotate(z, phase) {
@@ -18,6 +22,7 @@ function nanOutside(value, active) {
 }
 
 export function renderStationarySimulation({ state, solution }) {
+  setDispersionDiagnosticsVisible(false);
   const sample = sampleStationaryState(state, solution);
 
   renderEnergyPanel({
@@ -36,6 +41,7 @@ export function renderStationarySimulation({ state, solution }) {
 }
 
 export function renderWavePacketSimulation({ state, simulation }) {
+  setDispersionDiagnosticsVisible(true);
   const x = simulation.x;
   const xMin = x[0];
   const xMax = x[x.length - 1];
@@ -177,6 +183,10 @@ function renderEnergyPanel({
 
 function addPotentialAnnotations(annotations, state, profile, xMax) {
   const V0 = state.potential.heightEV;
+
+  if (profile.type === "free") {
+    return;
+  }
 
   if (profile.type === "step") {
     annotations.push({
@@ -619,6 +629,244 @@ function commonXAxis(xMin, xMax) {
     range: [xMin, xMax],
     zeroline: false,
   };
+}
+
+
+export function renderDispersionDiagnostics({ simulation, analysis }) {
+  if (!analysis) {
+    return;
+  }
+
+  setDispersionDiagnosticsVisible(true);
+  updateDispersionMetricReadouts(analysis.metrics);
+  renderDispersionHistory(analysis);
+  renderMomentumSpectrum(analysis);
+  renderDispersionRelation(simulation, analysis);
+}
+
+export function setDispersionDiagnosticsVisible(visible) {
+  const card = document.getElementById("dispersion-card");
+  if (card) {
+    card.classList.toggle("hidden", !visible);
+  }
+}
+
+function updateDispersionMetricReadouts(metrics) {
+  document.getElementById("dispersion-mean-x").textContent =
+    `${formatSignedNumber(metrics.meanXNM, 3)} nm`;
+
+  document.getElementById("dispersion-sigma-x").textContent =
+    `${metrics.sigmaXNM.toFixed(3)} nm`;
+
+  document.getElementById("dispersion-mean-k").textContent =
+    `${formatSignedNumber(metrics.meanKNMInv, 3)} nm⁻¹`;
+
+  document.getElementById("dispersion-sigma-k").textContent =
+    `${metrics.sigmaKNMInv.toFixed(3)} nm⁻¹`;
+
+  document.getElementById("dispersion-vg").textContent =
+    `${formatSignedNumber(metrics.groupVelocityNMFS, 3)} nm/fs`;
+}
+
+function renderDispersionHistory(analysis) {
+  const traces = [
+    {
+      x: analysis.timeFS,
+      y: analysis.meanXNM,
+      type: "scatter",
+      mode: "lines",
+      name: "⟨x⟩",
+      line: { color: "#2457d6", width: 2.2 },
+      hovertemplate: "t=%{x:.3f} fs<br>⟨x⟩=%{y:.4f} nm<extra></extra>",
+    },
+    {
+      x: analysis.timeFS,
+      y: analysis.sigmaXNM,
+      type: "scatter",
+      mode: "lines",
+      name: "σx",
+      yaxis: "y2",
+      line: { color: "#d97706", width: 2.2 },
+      hovertemplate: "t=%{x:.3f} fs<br>σx=%{y:.4f} nm<extra></extra>",
+    },
+    {
+      x: analysis.timeFS,
+      y: analysis.freeSigmaXNM,
+      type: "scatter",
+      mode: "lines",
+      name: "free σx",
+      yaxis: "y2",
+      line: { color: "#d97706", width: 1.4, dash: "dot" },
+      hovertemplate: "t=%{x:.3f} fs<br>free σx=%{y:.4f} nm<extra></extra>",
+    },
+  ];
+
+  drawPlot(
+    "dispersion-history-plot",
+    "dispersionHistory",
+    traces,
+    {
+      datarevision: analysis.timeFS.length,
+      xaxis: {
+        title: "Time t (fs)",
+        zeroline: false,
+      },
+      yaxis: {
+        title: "Mean position ⟨x⟩ (nm)",
+        zeroline: false,
+      },
+      yaxis2: {
+        title: "Width σx (nm)",
+        overlaying: "y",
+        side: "right",
+        rangemode: "tozero",
+        showgrid: false,
+      },
+      showlegend: true,
+      legend: {
+        orientation: "h",
+        y: -0.28,
+      },
+      margin: { t: 14, r: 68, l: 66, b: 82 },
+    },
+  );
+}
+
+function renderMomentumSpectrum(analysis) {
+  const spectrum = analysis.spectrum;
+
+  drawPlot(
+    "momentum-spectrum-plot",
+    "momentumSpectrum",
+    [
+      {
+        x: spectrum.k,
+        y: spectrum.density,
+        type: "scatter",
+        mode: "lines",
+        name: "|ψ̃(k)|²",
+        line: { color: "#7c3aed", width: 2.2 },
+        fill: "tozeroy",
+        fillcolor: "rgba(124,58,237,.08)",
+        hovertemplate: "k=%{x:.3f} nm⁻¹<br>|ψ̃|²=%{y:.5f} nm<extra></extra>",
+      },
+    ],
+    {
+      datarevision: analysis.spectrumRevision,
+      xaxis: {
+        title: "Wave number k (nm⁻¹)",
+        range: [spectrum.kMin, spectrum.kMax],
+        zeroline: true,
+        zerolinecolor: "#b7bfca",
+      },
+      yaxis: {
+        title: "Spectral probability density (nm)",
+        rangemode: "tozero",
+      },
+      shapes: [
+        {
+          type: "line",
+          x0: analysis.metrics.meanKNMInv,
+          x1: analysis.metrics.meanKNMInv,
+          y0: 0,
+          y1: 1,
+          yref: "paper",
+          line: { color: "#475467", width: 1.3, dash: "dash" },
+        },
+      ],
+      annotations: [
+        {
+          x: analysis.metrics.meanKNMInv,
+          y: 0.98,
+          yref: "paper",
+          text: "⟨k⟩",
+          showarrow: false,
+          xanchor: "left",
+          font: { size: 11, color: "#475467" },
+        },
+      ],
+      showlegend: false,
+      margin: { t: 14, r: 18, l: 74, b: 58 },
+    },
+  );
+}
+
+function renderDispersionRelation(simulation, analysis) {
+  const spectrum = analysis.spectrum;
+  const sampleCount = 241;
+  const k = new Float64Array(sampleCount);
+  const energy = new Float64Array(sampleCount);
+  const dk = (spectrum.kMax - spectrum.kMin) / (sampleCount - 1);
+
+  for (let i = 0; i < sampleCount; i += 1) {
+    const kValue = spectrum.kMin + i * dk;
+    k[i] = kValue;
+    energy[i] = dispersionEnergyEV(kValue);
+  }
+
+  const meanK = analysis.metrics.meanKNMInv;
+  const meanEnergy = dispersionEnergyEV(meanK);
+  const centralEnergy = dispersionEnergyEV(simulation.k0);
+
+  drawPlot(
+    "dispersion-relation-plot",
+    "dispersionRelation",
+    [
+      {
+        x: k,
+        y: energy,
+        type: "scatter",
+        mode: "lines",
+        name: "E(k)",
+        line: { color: "#0f6fa8", width: 2.2 },
+        hovertemplate: "k=%{x:.3f} nm⁻¹<br>E=%{y:.3f} eV<extra></extra>",
+      },
+      {
+        x: [meanK],
+        y: [meanEnergy],
+        type: "scatter",
+        mode: "markers+text",
+        name: "current ⟨k⟩",
+        text: ["⟨k⟩"],
+        textposition: "top center",
+        marker: { color: "#d97706", size: 9 },
+        hovertemplate: "⟨k⟩=%{x:.3f} nm⁻¹<br>E(⟨k⟩)=%{y:.3f} eV<extra></extra>",
+      },
+      {
+        x: [simulation.k0],
+        y: [centralEnergy],
+        type: "scatter",
+        mode: "markers",
+        name: "initial k₀",
+        marker: { color: "#7c3aed", size: 8, symbol: "diamond" },
+        hovertemplate: "k₀=%{x:.3f} nm⁻¹<br>E₀=%{y:.3f} eV<extra></extra>",
+      },
+    ],
+    {
+      datarevision: `${analysis.spectrumRevision}:${analysis.metrics.meanKNMInv.toFixed(6)}`,
+      xaxis: {
+        title: "Wave number k (nm⁻¹)",
+        range: [spectrum.kMin, spectrum.kMax],
+        zeroline: true,
+        zerolinecolor: "#b7bfca",
+      },
+      yaxis: {
+        title: "Kinetic energy E (eV)",
+        rangemode: "tozero",
+      },
+      showlegend: true,
+      legend: { orientation: "h", y: -0.28 },
+      margin: { t: 14, r: 18, l: 66, b: 82 },
+    },
+  );
+}
+
+function formatSignedNumber(value, digits) {
+  const magnitude = Math.abs(value).toFixed(digits);
+  if (Math.abs(value) < 0.5 * 10 ** (-digits)) {
+    return Number(0).toFixed(digits);
+  }
+  return value < 0 ? `−${magnitude}` : `+${magnitude}`;
 }
 
 function drawPlot(elementId, key, traces, layout) {

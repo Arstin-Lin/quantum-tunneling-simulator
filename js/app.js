@@ -14,6 +14,11 @@ import {
   wavePacketProbabilities,
 } from "./wavePacketSolver.js";
 import {
+  createDispersionAnalysis,
+  updateDispersionAnalysis,
+} from "./dispersionAnalysis.js";
+import {
+  renderDispersionDiagnostics,
   renderStationarySimulation,
   renderWavePacketSimulation,
 } from "./renderer.js";
@@ -21,6 +26,7 @@ import {
 let currentProfile = buildPotentialProfile(state.potential);
 let stationarySolution = null;
 let packetSimulation = null;
+let dispersionAnalysis = null;
 
 function rebuildPhysics() {
   currentProfile = buildPotentialProfile(state.potential);
@@ -32,6 +38,7 @@ function rebuildPhysics() {
       profile: currentProfile,
     });
     packetSimulation = null;
+    dispersionAnalysis = null;
     updateScatteringReadout(stationarySolution);
   } else {
     stationarySolution = null;
@@ -42,6 +49,8 @@ function rebuildPhysics() {
       sigmaNM: state.wavePacket.sigmaNM,
       dtFS: state.wavePacket.dtFS,
     });
+
+    dispersionAnalysis = createDispersionAnalysis(packetSimulation);
 
     state.wavePacket.running = false;
     state.wavePacket.timeFS = 0;
@@ -74,13 +83,30 @@ function renderCurrentState() {
   }
 }
 
+function renderCurrentDiagnostics() {
+  if (
+    state.waveForm !== "packet" ||
+    !packetSimulation ||
+    !dispersionAnalysis
+  ) {
+    return;
+  }
+
+  renderDispersionDiagnostics({
+    simulation: packetSimulation,
+    analysis: dispersionAnalysis,
+  });
+}
+
 function handlePhysicsChange() {
   rebuildPhysics();
   renderCurrentState();
+  renderCurrentDiagnostics();
 }
 
 function handleDisplayChange() {
   renderCurrentState();
+  renderCurrentDiagnostics();
 }
 
 function handlePacketPlayPause() {
@@ -104,6 +130,7 @@ function handlePacketReset() {
   state.wavePacket.running = false;
   rebuildPhysics();
   renderCurrentState();
+  renderCurrentDiagnostics();
 }
 
 function updatePacketObservables() {
@@ -124,11 +151,15 @@ bindUI(state, {
 
 rebuildPhysics();
 renderCurrentState();
+renderCurrentDiagnostics();
 
-// Plotly rendering is intentionally throttled. The numerical propagator takes
-// several small Crank–Nicolson steps between displayed frames.
+// Main position-space plots stay responsive at ~20 fps. The heavier
+// momentum-space transform and dispersion plots are intentionally refreshed
+// at a lower rate so analysis does not slow the propagator.
 const DISPLAY_INTERVAL_MS = 50;
+const DIAGNOSTIC_INTERVAL_MS = 220;
 let lastDisplayTime = 0;
+let lastDiagnosticTime = 0;
 
 function animate(timestamp) {
   if (timestamp - lastDisplayTime >= DISPLAY_INTERVAL_MS) {
@@ -144,7 +175,29 @@ function animate(timestamp) {
       state.wavePacket.timeFS = packetSimulation.timeFS;
       updatePacketObservables();
       updatePlaybackUIFromState(state);
+
+      if (dispersionAnalysis) {
+        updateDispersionAnalysis(
+          packetSimulation,
+          dispersionAnalysis,
+          { refreshSpectrum: false },
+        );
+      }
+
       renderCurrentState();
+
+      if (
+        dispersionAnalysis &&
+        timestamp - lastDiagnosticTime >= DIAGNOSTIC_INTERVAL_MS
+      ) {
+        updateDispersionAnalysis(
+          packetSimulation,
+          dispersionAnalysis,
+          { refreshSpectrum: true },
+        );
+        renderCurrentDiagnostics();
+        lastDiagnosticTime = timestamp;
+      }
     }
 
     lastDisplayTime = timestamp;

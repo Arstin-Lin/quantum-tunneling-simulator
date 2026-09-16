@@ -24,6 +24,7 @@ const ids = {
   heightLabel: "height-label",
   widthLabel: "width-label",
 
+  heightControl: "height-control",
   widthControl: "width-control",
   spacingControl: "spacing-control",
   packetPositionControl: "packet-position-control",
@@ -66,7 +67,8 @@ export function bindUI(state, callbacks) {
   function configurePotentialControls() {
     const type = c.potentialType.value;
 
-    c.widthControl.classList.toggle("hidden", type === "step");
+    c.heightControl.classList.toggle("hidden", type === "free");
+    c.widthControl.classList.toggle("hidden", type === "step" || type === "free");
     c.spacingControl.classList.toggle("hidden", type !== "doubleBarrier");
 
     c.heightLabel.textContent =
@@ -87,7 +89,10 @@ export function bindUI(state, callbacks) {
     c.packetSigmaControl.classList.toggle("hidden", !isPacket);
     c.packetEvolutionGroup.classList.toggle("hidden", !isPacket);
     c.planeDecompositionGroup.classList.toggle("hidden", isPacket);
-    c.interiorObservable.classList.toggle("hidden", !isPacket);
+    c.interiorObservable.classList.toggle(
+      "hidden",
+      !isPacket || c.potentialType.value === "free",
+    );
 
     c.energyLabel.textContent = isPacket ? "Central kinetic energy" : "Electron energy";
     c.energySubscript.textContent = isPacket ? "₀" : "";

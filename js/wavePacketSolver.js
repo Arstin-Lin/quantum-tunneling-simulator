@@ -3,8 +3,8 @@ import { potentialAt } from "./potentials.js";
 // Convenient units for 1D electron dynamics:
 // ħ = 0.6582 eV·fs
 // ħ²/(2m_e) = 0.03810 eV·nm²
-const HBAR_EV_FS = 0.6582119569;
-const KINETIC_COEFF_EV_NM2 = 0.0380998212;
+export const HBAR_EV_FS = 0.6582119569;
+export const KINETIC_COEFF_EV_NM2 = 0.0380998212;
 
 // v1.0: choose the numerical window and grid resolution from the physical setup.
 // The calculation still uses a finite box, but the box is deliberately much larger

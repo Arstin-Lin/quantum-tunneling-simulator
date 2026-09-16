@@ -433,3 +433,125 @@ footer {
   .phase-spectrum-heading { align-items: flex-start; flex-direction: column; gap: 3px; }
   .phase-spectrum-note { white-space: normal; }
 }
+
+/* v1.1 dispersion diagnostics */
+.dispersion-card {
+  padding-bottom: 14px;
+}
+
+.dispersion-intro {
+  margin: 6px 6px 12px;
+  padding: 10px 12px;
+  border: 1px solid #dbe4f4;
+  border-radius: 10px;
+  background: var(--panel-accent);
+  color: var(--muted);
+  font-size: .86rem;
+  line-height: 1.5;
+}
+
+.dispersion-intro strong {
+  color: var(--text);
+}
+
+.dispersion-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 6px 12px;
+}
+
+.metric {
+  min-width: 0;
+  padding: 10px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.metric span,
+.metric small {
+  display: block;
+  color: var(--muted);
+  font-size: .72rem;
+  line-height: 1.25;
+}
+
+.metric strong {
+  display: block;
+  margin: 4px 0 2px;
+  color: var(--text);
+  font-size: .98rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dispersion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0 6px;
+}
+
+.diagnostic-panel {
+  min-width: 0;
+  padding: 10px 10px 2px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #fff;
+}
+
+.diagnostic-panel h3 {
+  margin: 0 4px 2px;
+  font-size: .86rem;
+}
+
+.dispersion-relation-panel {
+  grid-column: 1 / -1;
+}
+
+.diagnostic-plot {
+  height: 285px;
+}
+
+.dispersion-relation-panel .diagnostic-plot {
+  height: 260px;
+}
+
+.dispersion-note {
+  margin: 12px 8px 2px;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 1000px) {
+  .dispersion-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .dispersion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dispersion-relation-panel {
+    grid-column: auto;
+  }
+
+  .dispersion-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .dispersion-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .diagnostic-plot,
+  .dispersion-relation-panel .diagnostic-plot {
+    height: 250px;
+  }
+}

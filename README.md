@@ -1,167 +1,267 @@
-# Quantum Tunneling Explorer — v1.0
+# Quantum Tunneling Explorer — v1.1 Dispersion
 
-v1.0 is the presentation-ready milestone for the one-dimensional quantum tunneling simulator developed for an Introduction to Semiconductor project.
+v1.1 extends the v1.0 quantum-scattering simulator with quantitative wave-packet dispersion diagnostics. The propagation physics is still handled by the same Crank–Nicolson solver; the new analysis layer measures how the evolving state translates, spreads, and redistributes in momentum space.
 
-The release keeps the stationary and time-dependent physics introduced in v0.7–v0.9, adds a clearer semiconductor interpretation, introduces verified presentation presets, improves the numerical spatial domain used for wave packets, and consolidates several visualization fixes.
+## Main idea
 
-## Core physics
+A wave packet can change in two conceptually different ways:
 
-### Wave forms
+- **Translation** — the packet center moves, tracked by `⟨x⟩(t)`.
+- **Dispersion** — the packet width changes, tracked by `σx(t)`.
 
-- **Plane wave** — stationary scattering state
-- **Wave packet** — time-dependent Gaussian packet
+For a continuum free electron,
 
-### Potential structures
+```text
+E(k) = ħ²k²/(2m_e)
+vg(k) = (1/ħ) dE/dk = ħk/m_e
+```
 
+A Gaussian contains a finite spread of wave numbers. Because different `k` components have different group velocities, the packet spreads even in free space.
+
+For the initial state used by the simulator,
+
+```text
+ψ(x,0) ∝ exp[-(x-x0)²/(4σ0²)] exp(ik0x)
+```
+
+`σ0` is the initial standard deviation of the probability density. The continuum free-space reference is
+
+```text
+σx(t) = σ0 sqrt[1 + (C t/(ħ σ0²))²]
+C = ħ²/(2m_e)
+```
+
+The v1.1 diagnostics plot this reference as a dashed curve so scattering-induced changes can be distinguished from ordinary free-packet spreading.
+
+## New in v1.1
+
+### 1. Free propagation mode
+
+The potential selector now includes:
+
+```text
+Free propagation
+```
+
+and the preset menu adds:
+
+```text
+Free-packet dispersion · wave packet
+```
+
+This is a reference experiment with `V(x)=0`. It is useful for isolating dispersion before introducing a barrier or well.
+
+### 2. Dispersion diagnostics panel
+
+Wave-packet mode now reveals a fourth visualization block:
+
+```text
+IV. Wave-Packet Dispersion
+```
+
+with live readouts for:
+
+- mean position `⟨x⟩`
+- packet width `σx`
+- mean wave number `⟨k⟩`
+- wave-number width `σk`
+- continuum free-electron group velocity `vg(⟨k⟩)`
+
+The diagnostics card is hidden in plane-wave mode.
+
+### 3. Translation vs. spreading history
+
+The first diagnostic chart tracks:
+
+```text
+⟨x⟩(t)
+σx(t)
+```
+
+on separate y-axes. A dashed curve shows the continuum free-Gaussian prediction for `σx(t)`.
+
+This makes the distinction explicit:
+
+```text
+center motion  ≠  width growth
+translation    ≠  dispersion
+```
+
+### 4. Momentum-space spectrum
+
+The simulator estimates
+
+```text
+|ψ̃(k)|²
+```
+
+using a diagnostic discrete Fourier transform of the current position-space wavefunction.
+
+The spectrum is normalized over the displayed finite `k` window and is refreshed at a lower rate than the main animation so it does not dominate browser performance.
+
+Useful observations:
+
+- free propagation: the momentum distribution remains nearly unchanged
+- reflection: a negative-`k` component develops
+- transmission: positive-`k` content remains
+- simultaneous reflected/transmitted packets: the spectrum can become bimodal
+
+### 5. Free-electron dispersion relation
+
+The third diagnostic chart displays
+
+```text
+E(k) = ħ²k²/(2m_e)
+```
+
+with markers for:
+
+- the initial carrier wave number `k0`
+- the current full-state mean wave number `⟨k⟩`
+
+The parabolic curvature is the origin of free-electron wave-packet dispersion.
+
+### 6. Dedicated analysis module
+
+v1.1 adds:
+
+```text
+js/dispersionAnalysis.js
+```
+
+The software responsibilities are now:
+
+```text
+wavePacketSolver.js
+    evolve ψ(x,t)
+          ↓
+dispersionAnalysis.js
+    measure the state
+          ↓
+renderer.js
+    display diagnostics
+```
+
+This keeps the TDSE propagator separate from derived observables and makes future effective-mass work easier.
+
+## Numerical definitions
+
+### Position moments
+
+The diagnostics evaluate the normalized moments
+
+```text
+⟨x⟩ = ∫ x |ψ|² dx / ∫ |ψ|² dx
+σx² = ⟨x²⟩ - ⟨x⟩²
+```
+
+The normalization denominator is retained explicitly because the distant absorbing layers can eventually remove outgoing probability from the computational window.
+
+### Momentum moments
+
+Using `p = ħk`,
+
+```text
+⟨k⟩ = ∫ ψ* (-i ∂/∂x) ψ dx / ∫ |ψ|² dx
+⟨k²⟩ = ∫ |∂ψ/∂x|² dx / ∫ |ψ|² dx
+σk² = ⟨k²⟩ - ⟨k⟩²
+```
+
+A fourth-order centered finite-difference derivative is used for these diagnostic moments.
+
+### Momentum transform
+
+For visualization,
+
+```text
+ψ̃(k) = (1/sqrt(2π)) ∫ ψ(x) exp(-ikx) dx
+```
+
+is sampled over a symmetric finite `k` window. The diagnostic transform may stride over very large position grids to keep interactive performance reasonable.
+
+## Important numerical note: physical vs. numerical dispersion
+
+The displayed `E(k)=ħ²k²/(2m_e)` curve is the **continuum free-electron dispersion relation**.
+
+The Crank–Nicolson calculation uses a finite-difference spatial Hamiltonian and therefore has a small additional **numerical dispersion**. At the present grid spacing the free-packet evolution follows the continuum reference closely, but not identically. Refining the spatial grid reduces this difference.
+
+This distinction is scientifically useful:
+
+```text
+physical dispersion
+    comes from the curvature of the physical E(k)
+
+numerical dispersion
+    comes from approximating derivatives on a finite grid
+```
+
+## Core v1.0 features retained
+
+- Plane-wave stationary scattering
+- Gaussian wave-packet propagation
 - Potential step
 - Single barrier
 - Finite well
-- Double barrier
+- Double barrier / resonant tunneling
+- Adaptive open-line numerical window
+- Absorbing edge layers
+- `Re[ψ]`, `Im[ψ]`, `|ψ|`
+- cyclic phase spectrum
+- `|ψ|²`
+- `R`, `T`
+- `P_L(t)`, `P_int(t)`, `P_R(t)`
+- presentation presets
+- stable wavefunction y-axis
+- Plotly in-place-array refresh fix
 
-These are idealized piecewise-constant one-dimensional potentials. They can be interpreted as simplified models of band offsets, tunnel barriers, quantum wells, and resonant-tunneling structures.
+## Suggested experiments
 
-### Visualization blocks
+### Experiment 1 — isolate free dispersion
 
-1. Potential / Energy Landscape: `V(x)` and `E` or `E0`
-2. Complex Wavefunction: `Re[ψ]`, `Im[ψ]`, `|ψ|`, optional cyclic phase spectrum
-3. Probability Density: `|ψ|²`
-
-### Stationary observables
-
-```text
-R, T
-```
-
-The stationary multilayer solver internally checks probability-flux conservation.
-
-### Wave-packet observables
+Choose:
 
 ```text
-P_L(t), P_int(t), P_R(t)
+Free-packet dispersion · wave packet
 ```
 
-`P_int(t)` is the probability currently inside the interaction structure. Only after the scattered packets separate do `P_L` and `P_R` approach the asymptotic reflected and transmitted probabilities.
-
-## Numerical methods
-
-### Stationary scattering
-
-`stationarySolver.js` propagates the state vector
+Press Play and compare:
 
 ```text
-[ ψ, dψ/dx ]
+⟨x⟩(t)     packet translation
+σx(t)      packet spreading
+|ψ̃(k)|²    momentum distribution
 ```
 
-through arbitrary piecewise-constant layers. The formulation remains regular at `E = V` and supports propagating and evanescent regions.
+The momentum spectrum should remain nearly unchanged while `σx` grows.
 
-### Wave-packet propagation
+### Experiment 2 — change the initial width
 
-`wavePacketSolver.js` solves
+Compare a broad and narrow initial packet.
+
+A narrower `σx(0)` implies a broader momentum distribution, approximately consistent with
 
 ```text
-iħ ∂ψ/∂t = [-(ħ²/2m_e) ∂²/∂x² + V(x)] ψ
+σx σk ≈ 1/2
 ```
 
-with a Crank–Nicolson finite-difference propagator.
+for the initial minimum-uncertainty Gaussian.
 
-## New in v1.0
+The narrower packet therefore disperses more rapidly.
 
-### 1. Adaptive open-line numerical window
+### Experiment 3 — reflection in momentum space
 
-Earlier versions used a fixed spatial scale near `|x| ≲ 12 nm`. v1.0 removes that fixed-looking limit.
+Choose Direct tunneling and watch the momentum spectrum after the packet reaches the barrier.
 
-The time-dependent solver now chooses the computational domain from:
+A reflected packet generates spectral weight at negative `k`.
 
-- initial packet center `x0`
-- packet width `σ`
-- total potential-structure width
-- a large free-propagation margin on both sides
+### Experiment 4 — above-barrier scattering
 
-The grid spacing is targeted near `0.028 nm` and the total number of grid points adapts between approximately 1200 and 2400 points.
-
-The calculation is still necessarily finite. It approximates the whole line `x ∈ R` by placing absorbing layers far from the interaction region. The active numerical window and absorbing-edge width are shown beside the Play/Reset controls.
-
-Typical default single-barrier packet domain:
-
-```text
-x ≈ -18 nm ... +25 nm
-```
-
-rather than the previous approximately `-12 nm ... +12 nm` view.
-
-### 2. Presentation presets
-
-Four verified starting scenarios are included:
-
-- **Direct tunneling · wave packet**
-- **Above-barrier reflection · wave packet**
-- **Finite quantum well · plane wave**
-- **Resonant double barrier · plane wave**
-
-The resonant double-barrier preset uses
-
-```text
-E  = 3.3 eV
-V0 = 8.0 eV
-L  = 0.2 nm
-d  = 1.2 nm
-```
-
-and the stationary solver gives approximately
-
-```text
-T ≈ 0.99939
-```
-
-showing resonant transmission even though `E < V0`.
-
-Changing any physical control automatically returns the preset selector to `Custom`.
-
-### 3. Semiconductor framing
-
-The interface now identifies the intended simplified interpretation:
-
-- step → band-offset interface
-- barrier → tunnel barrier
-- well → quantum-well region
-- double barrier → resonant-tunneling structure
-
-A collapsible Model Scope section also states the important limitations. v1.0 still uses the free electron mass `m_e`; material-dependent effective mass is intentionally reserved for a later extension.
-
-### 4. Wave-packet probability partition
-
-Wave-packet mode now displays all three spatial probability sectors:
-
-```text
-P_L(t), P_int(t), P_R(t)
-```
-
-This makes it clearer when probability is still inside the barrier/well structure during the interaction.
-
-### 5. Wavefunction refresh fix
-
-The Crank–Nicolson solver updates the real and imaginary arrays in place. Plotly can otherwise reuse stale traces when `|ψ|` is hidden.
-
-v1.0 explicitly changes Plotly's `datarevision` with simulation time, so `Re[ψ]` and `Im[ψ]` continue animating correctly whether or not the envelope is displayed.
-
-### 6. Wider stationary lead view
-
-Plane-wave plots now show a somewhat larger lead region around the potential structure, improving the visibility of incident/reflected interference and transmitted phase evolution.
-
-## Phase visualization retained from v0.9
-
-The phase spectrum represents
-
-```text
-φ(x,t) = arg ψ(x,t)
-```
-
-with a cyclic hue map. Brightness is weighted by `|ψ|`, so phase is visually suppressed where the amplitude is nearly zero.
+Choose Above-barrier reflection. The final momentum distribution can contain both positive- and negative-`k` components even when `E0 > V0`.
 
 ## Project structure
 
 ```text
-quantum_tunneling_v1.0_release/
+quantum_tunneling_v1.1_dispersion/
 ├── index.html
 ├── style.css
 ├── README.md
@@ -174,84 +274,69 @@ quantum_tunneling_v1.0_release/
     ├── potentials.js
     ├── stationarySolver.js
     ├── wavePacketSolver.js
+    ├── dispersionAnalysis.js
     └── renderer.js
 ```
 
-## Run locally
+## Performance strategy
 
-Because the project uses ES modules, serve the project directory through a local server:
+The position-space animation remains near the v1.0 update rate. The more expensive momentum transform and three dispersion plots are refreshed less often.
+
+Conceptually:
+
+```text
+TDSE / position-space display   ~20 fps
+Dispersion diagnostics          ~4–5 fps
+```
+
+This keeps the wave-packet motion responsive while still providing live quantitative analysis.
+
+## Run locally
 
 ```bash
 python3 -m http.server 8000
 ```
 
-Then open:
+then open:
 
 ```text
 http://localhost:8000
 ```
 
-## Suggested v1.0 checks
-
-### Direct tunneling
-
-Choose the Direct tunneling preset, press Play, and observe the packet split into reflected and transmitted components.
-
-### Above-barrier reflection
-
-Choose Above-barrier reflection. Even for `E0 > V0`, the reflected packet should not vanish identically.
-
-### Resonant double barrier
-
-Choose Resonant double barrier. In plane-wave mode the displayed transmission should be near unity despite `E < V0`.
-
-### Phase spectrum
-
-Enable Phase spectrum in either wave form and observe phase winding, interference, and reflected/transmitted phase structure.
-
-### Envelope-independent animation
-
-In Wave packet mode, turn off `|ψ|` while leaving `Re[ψ]` and/or `Im[ψ]` enabled. The visible complex-wavefunction traces should continue evolving normally.
-
 ## Suggested Git workflow
 
-After v0.9 has been merged into `main`:
+After v1.0 is merged into `main`:
 
 ```bash
 git switch main
 git pull
 
-git switch -c release/v1.0
+git switch -c feature/dispersion-analysis
 ```
 
-Copy the v1.0 files into the repository and test locally. Then:
+Copy the v1.1 files into the repository, test locally, then:
 
 ```bash
 git status
 git diff
 git add .
 git status
-git commit -m "Prepare v1.0 quantum tunneling simulator"
-git push -u origin release/v1.0
+git commit -m "Add wave-packet dispersion diagnostics"
+git push -u origin feature/dispersion-analysis
 ```
 
-Open a Pull Request from `release/v1.0` into `main`.
+Open a Pull Request into `main`.
 
-After merging on GitHub:
+## Natural next extension
 
-```bash
-git switch main
-git pull origin main
+A particularly useful semiconductor extension is to replace the fixed free-electron mass with a material-dependent effective mass `m*`.
+
+Then the same diagnostics would directly show how changing band curvature modifies:
+
+```text
+E(k)
+vg
+σx(t)
 ```
 
-## Post-v1.0 roadmap
-
-The next physics extension can focus on dispersion diagnostics rather than core simulator architecture:
-
-- momentum-space distribution `|ψ̃(k)|²`
-- packet width `σx(t)`
-- group velocity
-- dispersion relation `E(k)`
-- semiconductor effective mass `m*`
-
-Those features can build directly on the time-dependent solver already present in v1.0.
+That would connect the simulator from generic quantum scattering to semiconductor carrier dynamics.
