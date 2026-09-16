@@ -1,4 +1,20 @@
 export const PRESETS = {
+  freeDispersion: {
+    description: "Reference experiment: a Gaussian electron packet translates and disperses in free space before any scattering structure is introduced.",
+    waveForm: "packet",
+    energyEV: 5.0,
+    potential: {
+      type: "free",
+      heightEV: 10.0,
+      widthNM: 1.0,
+      spacingNM: 1.0,
+    },
+    packet: {
+      initialPositionNM: -6.0,
+      sigmaNM: 0.65,
+    },
+  },
+
   directTunneling: {
     description: "A finite Gaussian packet tunnels through a thin barrier with E₀ < V₀.",
     waveForm: "packet",
