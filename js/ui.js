@@ -1,6 +1,16 @@
-import { PRESETS } from "./presets.js";
+import { PRESETS, PRESENTATION_SCENARIOS } from "./presets.js";
 
 const ids = {
+  presentationMode: "mode-presentation",
+  exploreMode: "mode-explore",
+  modeHeading: "mode-heading",
+  modeDescription: "mode-description",
+  presentationScenario: "presentation-scenario",
+  presentationTitle: "presentation-title",
+  presentationQuestion: "presentation-question",
+  presentationTry: "presentation-try",
+  presentationApplication: "presentation-application",
+
   preset: "scenario-preset",
   presetNote: "preset-note",
 
@@ -64,6 +74,46 @@ export function bindUI(state, callbacks) {
     Object.entries(ids).map(([key, id]) => [key, document.getElementById(id)]),
   );
 
+  function hydrateControlsFromState() {
+    c.potentialType.value = state.potential.type;
+    c.energy.value = String(state.electron.energyEV);
+    c.height.value = String(state.potential.heightEV);
+    c.thickness.value = String(state.potential.widthNM);
+    c.spacing.value = String(state.potential.spacingNM);
+    c.packetPosition.value = String(state.wavePacket.initialPositionNM);
+    c.packetSigma.value = String(state.wavePacket.sigmaNM);
+
+    c.planeWave.checked = state.waveForm === "plane";
+    c.packetWave.checked = state.waveForm === "packet";
+    c.totalMode.checked = state.planeWave.decomposition === "total";
+    c.componentMode.checked = state.planeWave.decomposition === "components";
+
+    c.real.checked = state.display.real;
+    c.imaginary.checked = state.display.imaginary;
+    c.magnitude.checked = state.display.magnitude;
+    c.phase.checked = state.display.phase;
+    c.energyValues.checked = state.display.energyValues;
+    c.scatteringObservables.checked = state.display.scatteringObservables;
+  }
+
+  function configureInterfaceMode() {
+    state.interfaceMode = c.exploreMode.checked ? "explore" : "presentation";
+    document.body.classList.toggle("mode-presentation", state.interfaceMode === "presentation");
+    document.body.classList.toggle("mode-explore", state.interfaceMode === "explore");
+
+    if (state.interfaceMode === "presentation") {
+      c.modeHeading.textContent = "Presentation";
+      c.modeDescription.textContent =
+        "A focused classroom view with only the controls needed to tell the tunneling story.";
+      c.observablesPanel.hidden = false;
+    } else {
+      c.modeHeading.textContent = "Explore";
+      c.modeDescription.textContent =
+        "The complete laboratory: potentials, wave representations, phase, dispersion, and numerical details.";
+      c.observablesPanel.hidden = !state.display.scatteringObservables;
+    }
+  }
+
   function configurePotentialControls() {
     const type = c.potentialType.value;
 
@@ -103,6 +153,33 @@ export function bindUI(state, callbacks) {
     updatePlaybackUI(state, c);
   }
 
+  function updatePresentationGuide(scenarioKey) {
+    const scenario = PRESENTATION_SCENARIOS[scenarioKey];
+
+    if (!scenario) {
+      c.presentationTitle.textContent = "Current custom state";
+      c.presentationQuestion.textContent =
+        "How does the current potential structure reshape the electron state?";
+      c.presentationTry.textContent =
+        "Change the visible physical parameters and compare the wavefunction, probability density, and scattering probabilities.";
+      c.presentationApplication.textContent =
+        "Switch to Explore mode to inspect the full model configuration and advanced diagnostics.";
+      return;
+    }
+
+    c.presentationTitle.textContent = scenario.title;
+    c.presentationQuestion.textContent = scenario.question;
+    c.presentationTry.textContent = scenario.tryText;
+    c.presentationApplication.textContent = scenario.application;
+  }
+
+  function markCurrentStateCustom() {
+    c.preset.value = "custom";
+    c.presetNote.textContent = "Manual parameter control.";
+    c.presentationScenario.value = "custom";
+    updatePresentationGuide("custom");
+  }
+
   function syncPhysicalState({ markCustom = true } = {}) {
     state.waveForm = c.packetWave.checked ? "packet" : "plane";
     state.electron.energyEV = Number(c.energy.value);
@@ -114,8 +191,7 @@ export function bindUI(state, callbacks) {
     state.wavePacket.sigmaNM = Number(c.packetSigma.value);
 
     if (markCustom) {
-      c.preset.value = "custom";
-      c.presetNote.textContent = "Manual parameter control.";
+      markCurrentStateCustom();
     }
 
     configurePotentialControls();
@@ -134,20 +210,18 @@ export function bindUI(state, callbacks) {
     state.display.energyValues = c.energyValues.checked;
     state.display.scatteringObservables = c.scatteringObservables.checked;
 
-    c.observablesPanel.hidden = !state.display.scatteringObservables;
+    c.observablesPanel.hidden =
+      state.interfaceMode === "explore"
+        ? !state.display.scatteringObservables
+        : false;
 
     callbacks.onDisplayChange();
   }
 
-  function applyPreset(presetKey) {
-    if (presetKey === "custom") {
-      c.presetNote.textContent = "Manual parameter control.";
-      return;
-    }
-
+  function loadPreset(presetKey) {
     const preset = PRESETS[presetKey];
     if (!preset) {
-      return;
+      return false;
     }
 
     c.potentialType.value = preset.potential.type;
@@ -164,12 +238,63 @@ export function bindUI(state, callbacks) {
       c.packetSigma.value = String(preset.packet.sigmaNM);
     }
 
+    c.preset.value = presetKey;
     c.presetNote.textContent = preset.description;
+    return true;
+  }
+
+  function applyExplorePreset(presetKey) {
+    if (presetKey === "custom") {
+      c.presetNote.textContent = "Manual parameter control.";
+      return;
+    }
+
+    if (!loadPreset(presetKey)) {
+      return;
+    }
+
+    const matchingScenario = Object.entries(PRESENTATION_SCENARIOS)
+      .find(([, scenario]) => scenario.presetKey === presetKey)?.[0] ?? "custom";
+
+    c.presentationScenario.value = matchingScenario;
+    updatePresentationGuide(matchingScenario);
     syncPhysicalState({ markCustom: false });
   }
 
+  function applyPresentationScenario(scenarioKey) {
+    if (scenarioKey === "custom") {
+      updatePresentationGuide("custom");
+      return;
+    }
+
+    const scenario = PRESENTATION_SCENARIOS[scenarioKey];
+    if (!scenario || !loadPreset(scenario.presetKey)) {
+      return;
+    }
+
+    c.presentationScenario.value = scenarioKey;
+    updatePresentationGuide(scenarioKey);
+    syncPhysicalState({ markCustom: false });
+  }
+
+  c.presentationMode.addEventListener("change", () => {
+    if (!c.presentationMode.checked) return;
+    configureInterfaceMode();
+    callbacks.onDisplayChange();
+  });
+
+  c.exploreMode.addEventListener("change", () => {
+    if (!c.exploreMode.checked) return;
+    configureInterfaceMode();
+    callbacks.onDisplayChange();
+  });
+
+  c.presentationScenario.addEventListener("change", () => {
+    applyPresentationScenario(c.presentationScenario.value);
+  });
+
   c.preset.addEventListener("change", () => {
-    applyPreset(c.preset.value);
+    applyExplorePreset(c.preset.value);
   });
 
   [
@@ -210,10 +335,24 @@ export function bindUI(state, callbacks) {
     updatePlaybackUI(state, c);
   });
 
+  hydrateControlsFromState();
+  c.presentationMode.checked = state.interfaceMode === "presentation";
+  c.exploreMode.checked = state.interfaceMode === "explore";
+
+  const initialPreset = PRESETS[c.preset.value];
+  if (initialPreset) {
+    c.presetNote.textContent = initialPreset.description;
+  }
+
+  configureInterfaceMode();
   configurePotentialControls();
   configureWaveFormControls();
   updateLabels(state, c);
-  c.observablesPanel.hidden = !state.display.scatteringObservables;
+  updatePresentationGuide(c.presentationScenario.value);
+  c.observablesPanel.hidden =
+    state.interfaceMode === "explore"
+      ? !state.display.scatteringObservables
+      : false;
 }
 
 export function updatePlaybackUIFromState(state) {

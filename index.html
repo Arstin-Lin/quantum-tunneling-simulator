@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Interactive one-dimensional quantum tunneling simulator with stationary scattering, time-dependent Gaussian wave packets, piecewise-constant potentials, and cyclic phase visualization." />
-  <title>Quantum Tunneling Explorer · v1.1</title>
+  <meta name="description" content="Dual-interface quantum tunneling simulator with a guided presentation mode and a full exploration laboratory for stationary scattering, wave packets, phase, and dispersion." />
+  <title>Quantum Tunneling Explorer · v1.2</title>
   <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body>
+<body class="mode-presentation">
   <main class="container">
     <header class="page-header">
       <div class="header-line">
@@ -16,30 +16,71 @@
           <p class="eyebrow">Introduction to Semiconductor · Quantum Scattering</p>
           <h1>Quantum Tunneling Explorer</h1>
         </div>
-        <span class="version-badge">v1.1</span>
+        <span class="version-badge">v1.2</span>
       </div>
-      <p class="subtitle">Stationary scattering, time-dependent wave-packet propagation, and quantitative dispersion diagnostics in idealized one-dimensional semiconductor potential structures.</p>
+      <p class="subtitle">A dual-interface quantum-scattering laboratory: a guided classroom view for the core tunneling story and a full exploration workspace for deeper analysis.</p>
       <div class="model-badges" aria-label="Model summary">
         <span>1D model</span>
         <span>piecewise-constant V(x)</span>
         <span>electron mass m<sub>e</sub></span>
         <span>open-line numerical approximation</span>
         <span>dispersion diagnostics</span>
+        <span>Presentation / Explore interface</span>
       </div>
     </header>
 
-    <section class="preset-panel" aria-label="Example scenarios">
+    <section class="interface-switcher" aria-label="Interface mode">
+      <div class="interface-switcher-copy">
+        <span class="section-kicker">Interface mode</span>
+        <strong id="mode-heading">Presentation</strong>
+        <span id="mode-description">A focused classroom view with only the controls needed to tell the tunneling story.</span>
+      </div>
+      <div class="segmented-control" role="radiogroup" aria-label="Choose interface mode">
+        <label><input type="radio" name="interface-mode" id="mode-presentation" value="presentation" checked /><span>Presentation</span></label>
+        <label><input type="radio" name="interface-mode" id="mode-explore" value="explore" /><span>Explore</span></label>
+      </div>
+    </section>
+
+    <section class="presentation-guide presentation-only" aria-label="Presentation scenario">
+      <div class="presentation-scenario-select">
+        <span class="section-kicker">Guided scenario</span>
+        <label for="presentation-scenario">Choose the physical story</label>
+        <select id="presentation-scenario">
+          <option value="directTunneling" selected>Basic quantum tunneling</option>
+          <option value="aboveBarrier">Above-barrier reflection</option>
+          <option value="resonantDoubleBarrier">Resonant tunneling</option>
+          <option value="custom">Current custom state</option>
+        </select>
+      </div>
+      <div class="presentation-story">
+        <div class="story-card">
+          <span>Question</span>
+          <strong id="presentation-title">Basic quantum tunneling</strong>
+          <p id="presentation-question">Can an electron cross a barrier even when its central kinetic energy is below the barrier height?</p>
+        </div>
+        <div class="story-card">
+          <span>Try</span>
+          <p id="presentation-try">Press Play, then vary E₀, V₀, and L. Compare how much probability remains on the left and appears on the right.</p>
+        </div>
+        <div class="story-card application-card">
+          <span>Application</span>
+          <p id="presentation-application">Device connection: a thin insulating or semiconductor barrier in a tunnel junction.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="preset-panel explore-only" aria-label="Example scenarios">
       <div class="preset-copy">
-        <span class="section-kicker">Presentation presets</span>
-        <strong>Start from a physically meaningful scattering scenario</strong>
+        <span class="section-kicker">Exploration presets</span>
+        <strong>Jump to a physically meaningful reference configuration</strong>
         <span id="preset-note" class="preset-note">Manual parameter control.</span>
       </div>
       <div class="preset-control">
         <label for="scenario-preset">Scenario</label>
         <select id="scenario-preset">
-          <option value="custom" selected>Custom</option>
+          <option value="custom">Custom</option>
           <option value="freeDispersion">Free-packet dispersion · wave packet</option>
-          <option value="directTunneling">Direct tunneling · wave packet</option>
+          <option value="directTunneling" selected>Direct tunneling · wave packet</option>
           <option value="aboveBarrier">Above-barrier reflection · wave packet</option>
           <option value="quantumWell">Finite quantum well · plane wave</option>
           <option value="resonantDoubleBarrier">Resonant double barrier · plane wave</option>
@@ -49,7 +90,7 @@
 
     <section class="control-panel" aria-label="Simulation controls">
       <div class="parameter-grid">
-        <div class="control-group">
+        <div class="control-group explore-only">
           <label for="potential-type">Potential form</label>
           <select id="potential-type">
             <option value="barrier" selected>Single barrier</option>
@@ -80,31 +121,31 @@
           <input type="range" id="spacing" min="0.1" max="4" step="0.1" value="1.0" />
         </div>
 
-        <div class="control-group hidden packet-parameter" id="packet-position-control">
+        <div class="control-group hidden packet-parameter explore-only" id="packet-position-control">
           <label for="packet-position">Initial packet center <i>x</i><sub>0</sub> <span id="val-packet-position">−6.0</span> nm</label>
           <input type="range" id="packet-position" min="-10" max="-2" step="0.1" value="-6" />
         </div>
 
-        <div class="control-group hidden packet-parameter" id="packet-sigma-control">
+        <div class="control-group hidden packet-parameter explore-only" id="packet-sigma-control">
           <label for="packet-sigma">Packet width <i>σ</i> <span id="val-packet-sigma">0.65</span> nm</label>
           <input type="range" id="packet-sigma" min="0.25" max="1.50" step="0.05" value="0.65" />
         </div>
       </div>
 
       <div class="mode-grid">
-        <fieldset class="choice-group">
+        <fieldset class="choice-group explore-only">
           <legend>Wave form</legend>
           <label><input type="radio" name="wave-form" value="plane" id="wave-plane" checked /> Plane wave</label>
           <label><input type="radio" name="wave-form" value="packet" id="wave-packet" /> Wave packet</label>
         </fieldset>
 
-        <fieldset class="choice-group" id="plane-decomposition-group">
+        <fieldset class="choice-group explore-only" id="plane-decomposition-group">
           <legend>Plane-wave decomposition</legend>
           <label><input type="radio" name="decomposition" value="total" id="mode-total" checked /> Total state</label>
           <label><input type="radio" name="decomposition" value="components" id="mode-components" /> Components</label>
         </fieldset>
 
-        <fieldset class="choice-group">
+        <fieldset class="choice-group explore-only">
           <legend>Wavefunction representation</legend>
           <label><input type="checkbox" id="show-real" checked /> Re[ψ]</label>
           <label><input type="checkbox" id="show-imag" checked /> Im[ψ]</label>
@@ -112,7 +153,7 @@
           <label><input type="checkbox" id="show-phase" /> Phase spectrum</label>
         </fieldset>
 
-        <fieldset class="choice-group">
+        <fieldset class="choice-group explore-only">
           <legend>Display</legend>
           <label><input type="checkbox" id="show-energy-values" checked /> Energy values</label>
           <label><input type="checkbox" id="show-rt" checked /> Scattering observables</label>
@@ -167,7 +208,7 @@
         <div id="probability-plot" class="plot probability-plot"></div>
       </article>
 
-      <article id="dispersion-card" class="viz-card dispersion-card hidden">
+      <article id="dispersion-card" class="viz-card dispersion-card explore-only hidden">
         <div class="viz-heading">
           <div><span class="panel-index">IV</span><h2>Wave-Packet Dispersion</h2></div>
           <span class="equation-tag">σ<sub>x</sub>(t), |ψ̃(k)|², E(k)</span>
@@ -209,7 +250,7 @@
       </article>
     </section>
 
-    <details class="model-note">
+    <details class="model-note explore-only">
       <summary>Model scope and semiconductor interpretation</summary>
       <div class="model-note-grid">
         <p><strong>Free:</strong> reference propagation without a structure. <strong>Step:</strong> idealized band-offset interface. <strong>Barrier:</strong> thin tunnel barrier. <strong>Well:</strong> quantum-well region. <strong>Double barrier:</strong> idealized resonant-tunneling structure.</p>
@@ -218,7 +259,7 @@
       </div>
     </details>
 
-    <footer>v1.1 · piecewise-constant potentials · Crank–Nicolson wave packets · cyclic phase visualization · dispersion diagnostics</footer>
+    <footer>v1.2 · dual Presentation / Explore interface · shared physics engine · Crank–Nicolson wave packets · dispersion diagnostics</footer>
   </main>
   <script type="module" src="js/app.js"></script>
 </body>

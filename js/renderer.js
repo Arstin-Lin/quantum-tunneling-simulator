@@ -21,6 +21,28 @@ function nanOutside(value, active) {
   return active ? value : NaN;
 }
 
+function effectiveDisplay(state) {
+  if (state.interfaceMode !== "presentation") {
+    return state.display;
+  }
+
+  return {
+    ...state.display,
+    real: true,
+    imaginary: false,
+    magnitude: true,
+    phase: false,
+    energyValues: true,
+    scatteringObservables: true,
+  };
+}
+
+function effectiveDecomposition(state) {
+  return state.interfaceMode === "presentation"
+    ? "total"
+    : state.planeWave.decomposition;
+}
+
 export function renderStationarySimulation({ state, solution }) {
   setDispersionDiagnosticsVisible(false);
   const sample = sampleStationaryState(state, solution);
@@ -145,7 +167,7 @@ function renderEnergyPanel({
 
   const annotations = [];
 
-  if (state.display.energyValues) {
+  if (effectiveDisplay(state).energyValues) {
     annotations.push({
       x: xMin + 0.03 * (xMax - xMin),
       y: state.electron.energyEV,
@@ -245,13 +267,13 @@ function addPotentialAnnotations(annotations, state, profile, xMax) {
 function renderStationaryWavefunctionPanel(state, data) {
   const traces = [];
 
-  if (state.planeWave.decomposition === "total") {
+  if (effectiveDecomposition(state) === "total") {
     addRepresentations(
       traces,
       data.x,
       data.total,
       "ψ",
-      state.display,
+      effectiveDisplay(state),
       {
         real: "#2457d6",
         imag: "#d97706",
@@ -259,10 +281,10 @@ function renderStationaryWavefunctionPanel(state, data) {
       },
     );
   } else {
-    addComponent(traces, data.x, data.incident, "Incident", state.display, "#0f8a5f");
-    addComponent(traces, data.x, data.reflected, "Reflected", state.display, "#c2413b");
-    addComponent(traces, data.x, data.inside, "Interior", state.display, "#7c3aed");
-    addComponent(traces, data.x, data.transmitted, "Transmitted", state.display, "#0f6fa8");
+    addComponent(traces, data.x, data.incident, "Incident", effectiveDisplay(state), "#0f8a5f");
+    addComponent(traces, data.x, data.reflected, "Reflected", effectiveDisplay(state), "#c2413b");
+    addComponent(traces, data.x, data.inside, "Interior", effectiveDisplay(state), "#7c3aed");
+    addComponent(traces, data.x, data.transmitted, "Transmitted", effectiveDisplay(state), "#0f6fa8");
   }
 
   const yRange = stationaryWavefunctionYRange(state, data);
@@ -290,9 +312,10 @@ function renderStationaryWavefunctionPanel(state, data) {
 
 function renderStationaryPhaseSpectrum(state, data) {
   const panel = document.getElementById("phase-spectrum-panel");
-  panel.classList.toggle("hidden", !state.display.phase);
+  const showPhase = effectiveDisplay(state).phase;
+  panel.classList.toggle("hidden", !showPhase);
 
-  if (!state.display.phase) {
+  if (!showPhase) {
     return;
   }
 
@@ -300,12 +323,12 @@ function renderStationaryPhaseSpectrum(state, data) {
   const note = document.getElementById("phase-spectrum-note");
 
   title.textContent =
-    state.planeWave.decomposition === "components"
+    effectiveDecomposition(state) === "components"
       ? "Phase spectrum · arg ψtotal(x,t)"
       : "Phase spectrum · arg ψ(x,t)";
 
   note.textContent =
-    state.planeWave.decomposition === "components"
+    effectiveDecomposition(state) === "components"
       ? "total state · brightness weighted by |ψ|"
       : "brightness weighted by |ψ|";
 
@@ -322,9 +345,10 @@ function renderStationaryPhaseSpectrum(state, data) {
 
 function renderPacketPhaseSpectrum(state, simulation) {
   const panel = document.getElementById("phase-spectrum-panel");
-  panel.classList.toggle("hidden", !state.display.phase);
+  const showPhase = effectiveDisplay(state).phase;
+  panel.classList.toggle("hidden", !showPhase);
 
-  if (!state.display.phase) {
+  if (!showPhase) {
     return;
   }
 
@@ -401,13 +425,14 @@ function renderPhaseSpectrumCanvas(re, im) {
 
 function renderPacketWavefunctionPanel(state, simulation) {
   const traces = [];
+  const display = effectiveDisplay(state);
   const magnitude = new Float64Array(simulation.re.length);
 
   for (let i = 0; i < magnitude.length; i += 1) {
     magnitude[i] = Math.hypot(simulation.re[i], simulation.im[i]);
   }
 
-  if (state.display.real) {
+  if (display.real) {
     traces.push(
       lineTrace(
         simulation.x,
@@ -418,7 +443,7 @@ function renderPacketWavefunctionPanel(state, simulation) {
     );
   }
 
-  if (state.display.imaginary) {
+  if (display.imaginary) {
     traces.push(
       lineTrace(
         simulation.x,
@@ -430,7 +455,7 @@ function renderPacketWavefunctionPanel(state, simulation) {
     );
   }
 
-  if (state.display.magnitude) {
+  if (display.magnitude) {
     traces.push(
       lineTrace(
         simulation.x,
@@ -470,7 +495,7 @@ function renderPacketWavefunctionPanel(state, simulation) {
 
 function stationaryWavefunctionYRange(state, data) {
   const sets =
-    state.planeWave.decomposition === "total"
+    effectiveDecomposition(state) === "total"
       ? [data.total]
       : [data.incident, data.reflected, data.inside, data.transmitted];
 

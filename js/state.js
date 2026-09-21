@@ -1,5 +1,7 @@
 export const state = {
-  waveForm: "plane",
+  interfaceMode: "presentation",
+
+  waveForm: "packet",
 
   electron: {
     energyEV: 5.0,
@@ -8,7 +10,7 @@ export const state = {
   potential: {
     type: "barrier",
     heightEV: 10.0,
-    widthNM: 1.0,
+    widthNM: 0.3,
     spacingNM: 1.0,
   },
 
