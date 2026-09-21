@@ -1,342 +1,187 @@
-# Quantum Tunneling Explorer — v1.1 Dispersion
+# Quantum Tunneling Explorer — v1.2 Dual Interface
 
-v1.1 extends the v1.0 quantum-scattering simulator with quantitative wave-packet dispersion diagnostics. The propagation physics is still handled by the same Crank–Nicolson solver; the new analysis layer measures how the evolving state translates, spreads, and redistributes in momentum space.
-
-## Main idea
-
-A wave packet can change in two conceptually different ways:
-
-- **Translation** — the packet center moves, tracked by `⟨x⟩(t)`.
-- **Dispersion** — the packet width changes, tracked by `σx(t)`.
-
-For a continuum free electron,
+v1.2 reorganizes the simulator around two audiences without duplicating the physics engine.
 
 ```text
-E(k) = ħ²k²/(2m_e)
-vg(k) = (1/ħ) dE/dk = ħk/m_e
+Presentation mode  → focused classroom story
+Explore mode       → complete v1.1 laboratory
 ```
 
-A Gaussian contains a finite spread of wave numbers. Because different `k` components have different group velocities, the packet spreads even in free space.
+The stationary solver, Crank–Nicolson wave-packet propagator, potential definitions, and dispersion-analysis code are shared by both modes.
 
-For the initial state used by the simulator,
+## Why v1.2 exists
+
+By v1.1 the simulator had become substantially more capable than the minimum course requirement. That depth is useful for interested users, but exposing every control during a short presentation creates unnecessary cognitive load.
+
+v1.2 therefore applies **progressive disclosure**:
 
 ```text
-ψ(x,0) ∝ exp[-(x-x0)²/(4σ0²)] exp(ik0x)
+same physical state
+       ↓
+shared physics engine
+       ↓
+Presentation UI   Explore UI
+focused subset    full laboratory
 ```
 
-`σ0` is the initial standard deviation of the probability density. The continuum free-space reference is
+Switching interface mode does not change the underlying numerical method.
+
+## Presentation mode
+
+Presentation mode is the default opening experience.
+
+It keeps the three core visualization blocks:
+
+1. `V(x), E` — potential / energy landscape
+2. `ψ(x,t)` — complex wavefunction
+3. `|ψ(x,t)|²` — probability density
+
+The visible controls are deliberately reduced to the parameters needed by the chosen scenario. Advanced wave-representation toggles, packet-width controls, phase visualization, dispersion diagnostics, and numerical-domain details are hidden.
+
+For readability, Presentation mode renders the wavefunction as:
 
 ```text
-σx(t) = σ0 sqrt[1 + (C t/(ħ σ0²))²]
-C = ħ²/(2m_e)
+Re[ψ] + |ψ|
 ```
 
-The v1.1 diagnostics plot this reference as a dashed curve so scattering-induced changes can be distinguished from ordinary free-packet spreading.
+while preserving the user's advanced display settings for Explore mode.
 
-## New in v1.1
+### Guided presentation scenarios
 
-### 1. Free propagation mode
+#### Basic quantum tunneling
 
-The potential selector now includes:
+A Gaussian packet with `E0 < V0` reaches a thin barrier. The presenter can vary:
+
+- central kinetic energy `E0`
+- barrier height `V0`
+- barrier width `L`
+
+and compare the left/interior/right probability during scattering.
+
+Device connection: a thin tunnel barrier or idealized tunnel junction.
+
+#### Above-barrier reflection
+
+A packet with `E0 > V0` demonstrates that quantum reflection can remain nonzero even without a classically forbidden region.
+
+#### Resonant tunneling
+
+A double-barrier stationary state uses the verified resonance near:
 
 ```text
-Free propagation
+E = 3.3 eV
+V0 = 8.0 eV
+L = 0.2 nm
+d = 1.2 nm
 ```
 
-and the preset menu adds:
+with stationary transmission close to unity. Varying `E`, `L`, or `d` shifts the system away from resonance.
 
-```text
-Free-packet dispersion · wave packet
-```
+Device connection: idealized resonant-tunneling heterostructures / resonant tunneling diodes.
 
-This is a reference experiment with `V(x)=0`. It is useful for isolating dispersion before introducing a barrier or well.
+## Explore mode
 
-### 2. Dispersion diagnostics panel
+Explore mode restores the complete v1.1 feature set:
 
-Wave-packet mode now reveals a fourth visualization block:
-
-```text
-IV. Wave-Packet Dispersion
-```
-
-with live readouts for:
-
-- mean position `⟨x⟩`
-- packet width `σx`
-- mean wave number `⟨k⟩`
-- wave-number width `σk`
-- continuum free-electron group velocity `vg(⟨k⟩)`
-
-The diagnostics card is hidden in plane-wave mode.
-
-### 3. Translation vs. spreading history
-
-The first diagnostic chart tracks:
-
-```text
-⟨x⟩(t)
-σx(t)
-```
-
-on separate y-axes. A dashed curve shows the continuum free-Gaussian prediction for `σx(t)`.
-
-This makes the distinction explicit:
-
-```text
-center motion  ≠  width growth
-translation    ≠  dispersion
-```
-
-### 4. Momentum-space spectrum
-
-The simulator estimates
-
-```text
-|ψ̃(k)|²
-```
-
-using a diagnostic discrete Fourier transform of the current position-space wavefunction.
-
-The spectrum is normalized over the displayed finite `k` window and is refreshed at a lower rate than the main animation so it does not dominate browser performance.
-
-Useful observations:
-
-- free propagation: the momentum distribution remains nearly unchanged
-- reflection: a negative-`k` component develops
-- transmission: positive-`k` content remains
-- simultaneous reflected/transmitted packets: the spectrum can become bimodal
-
-### 5. Free-electron dispersion relation
-
-The third diagnostic chart displays
-
-```text
-E(k) = ħ²k²/(2m_e)
-```
-
-with markers for:
-
-- the initial carrier wave number `k0`
-- the current full-state mean wave number `⟨k⟩`
-
-The parabolic curvature is the origin of free-electron wave-packet dispersion.
-
-### 6. Dedicated analysis module
-
-v1.1 adds:
-
-```text
-js/dispersionAnalysis.js
-```
-
-The software responsibilities are now:
-
-```text
-wavePacketSolver.js
-    evolve ψ(x,t)
-          ↓
-dispersionAnalysis.js
-    measure the state
-          ↓
-renderer.js
-    display diagnostics
-```
-
-This keeps the TDSE propagator separate from derived observables and makes future effective-mass work easier.
-
-## Numerical definitions
-
-### Position moments
-
-The diagnostics evaluate the normalized moments
-
-```text
-⟨x⟩ = ∫ x |ψ|² dx / ∫ |ψ|² dx
-σx² = ⟨x²⟩ - ⟨x⟩²
-```
-
-The normalization denominator is retained explicitly because the distant absorbing layers can eventually remove outgoing probability from the computational window.
-
-### Momentum moments
-
-Using `p = ħk`,
-
-```text
-⟨k⟩ = ∫ ψ* (-i ∂/∂x) ψ dx / ∫ |ψ|² dx
-⟨k²⟩ = ∫ |∂ψ/∂x|² dx / ∫ |ψ|² dx
-σk² = ⟨k²⟩ - ⟨k⟩²
-```
-
-A fourth-order centered finite-difference derivative is used for these diagnostic moments.
-
-### Momentum transform
-
-For visualization,
-
-```text
-ψ̃(k) = (1/sqrt(2π)) ∫ ψ(x) exp(-ikx) dx
-```
-
-is sampled over a symmetric finite `k` window. The diagnostic transform may stride over very large position grids to keep interactive performance reasonable.
-
-## Important numerical note: physical vs. numerical dispersion
-
-The displayed `E(k)=ħ²k²/(2m_e)` curve is the **continuum free-electron dispersion relation**.
-
-The Crank–Nicolson calculation uses a finite-difference spatial Hamiltonian and therefore has a small additional **numerical dispersion**. At the present grid spacing the free-packet evolution follows the continuum reference closely, but not identically. Refining the spatial grid reduces this difference.
-
-This distinction is scientifically useful:
-
-```text
-physical dispersion
-    comes from the curvature of the physical E(k)
-
-numerical dispersion
-    comes from approximating derivatives on a finite grid
-```
-
-## Core v1.0 features retained
-
-- Plane-wave stationary scattering
-- Gaussian wave-packet propagation
-- Potential step
-- Single barrier
-- Finite well
-- Double barrier / resonant tunneling
-- Adaptive open-line numerical window
-- Absorbing edge layers
+- free propagation
+- potential step
+- single barrier
+- finite well
+- double barrier
+- stationary plane-wave scattering
+- total/component decomposition
+- Gaussian Crank–Nicolson wave packets
+- adjustable `x0` and `σ`
 - `Re[ψ]`, `Im[ψ]`, `|ψ|`
 - cyclic phase spectrum
-- `|ψ|²`
 - `R`, `T`
-- `P_L(t)`, `P_int(t)`, `P_R(t)`
-- presentation presets
-- stable wavefunction y-axis
-- Plotly in-place-array refresh fix
+- `PL(t)`, `Pint(t)`, `PR(t)`
+- adaptive numerical domain and absorbing boundaries
+- `⟨x⟩`, `σx`, `⟨k⟩`, `σk`, group velocity
+- momentum-space spectrum `|ψ̃(k)|²`
+- free-electron `E(k)` relation
+- analytic free-Gaussian spreading reference
 
-## Suggested experiments
+## Shared-state behavior
 
-### Experiment 1 — isolate free dispersion
+Presentation and Explore are not separate simulators.
 
-Choose:
+If a user adjusts physical parameters and switches mode, the current physical state remains active. A presentation scenario is simply a convenient preset applied to that shared state.
 
-```text
-Free-packet dispersion · wave packet
-```
+Manual parameter changes mark the scenario as a custom state. This prevents the interface from claiming that a modified configuration is still one of the verified presets.
 
-Press Play and compare:
-
-```text
-⟨x⟩(t)     packet translation
-σx(t)      packet spreading
-|ψ̃(k)|²    momentum distribution
-```
-
-The momentum spectrum should remain nearly unchanged while `σx` grows.
-
-### Experiment 2 — change the initial width
-
-Compare a broad and narrow initial packet.
-
-A narrower `σx(0)` implies a broader momentum distribution, approximately consistent with
+## Software architecture
 
 ```text
-σx σk ≈ 1/2
+index.html
+style.css
+js/
+├── app.js
+├── state.js
+├── ui.js
+├── presets.js
+├── complex.js
+├── potentials.js
+├── stationarySolver.js
+├── wavePacketSolver.js
+├── dispersionAnalysis.js
+└── renderer.js
 ```
 
-for the initial minimum-uncertainty Gaussian.
+The main v1.2 architectural change is in the UI layer. Physics modules are unchanged from v1.1.
 
-The narrower packet therefore disperses more rapidly.
+## Suggested classroom flow
 
-### Experiment 3 — reflection in momentum space
-
-Choose Direct tunneling and watch the momentum spectrum after the packet reaches the barrier.
-
-A reflected packet generates spectral weight at negative `k`.
-
-### Experiment 4 — above-barrier scattering
-
-Choose Above-barrier reflection. The final momentum distribution can contain both positive- and negative-`k` components even when `E0 > V0`.
-
-## Project structure
+A compact presentation can be:
 
 ```text
-quantum_tunneling_v1.1_dispersion/
-├── index.html
-├── style.css
-├── README.md
-└── js/
-    ├── app.js
-    ├── state.js
-    ├── ui.js
-    ├── presets.js
-    ├── complex.js
-    ├── potentials.js
-    ├── stationarySolver.js
-    ├── wavePacketSolver.js
-    ├── dispersionAnalysis.js
-    └── renderer.js
+1. Basic tunneling
+   E0 < V0
+   press Play
+   vary L or V0
+
+2. Above-barrier reflection
+   E0 > V0
+   show that reflection is still possible
+
+3. Resonant tunneling
+   double barrier
+   T ≈ 1 at a tuned sub-barrier energy
+
+4. Switch to Explore mode only if the audience asks for more detail
 ```
 
-## Performance strategy
-
-The position-space animation remains near the v1.0 update rate. The more expensive momentum transform and three dispersion plots are refreshed less often.
-
-Conceptually:
-
-```text
-TDSE / position-space display   ~20 fps
-Dispersion diagnostics          ~4–5 fps
-```
-
-This keeps the wave-packet motion responsive while still providing live quantitative analysis.
+This keeps the main story understandable while retaining the deeper simulator for follow-up questions.
 
 ## Run locally
+
+Because the project uses ES modules, serve it through HTTP:
 
 ```bash
 python3 -m http.server 8000
 ```
 
-then open:
+Then open:
 
 ```text
 http://localhost:8000
 ```
 
-## Suggested Git workflow
+GitHub Pages also serves the project correctly.
 
-After v1.0 is merged into `main`:
+## Suggested Git workflow
 
 ```bash
 git switch main
 git pull
+git switch -c feature/dual-interface
 
-git switch -c feature/dispersion-analysis
-```
+# copy/test v1.2
 
-Copy the v1.1 files into the repository, test locally, then:
-
-```bash
 git status
 git diff
 git add .
 git status
-git commit -m "Add wave-packet dispersion diagnostics"
-git push -u origin feature/dispersion-analysis
+git commit -m "Add presentation and explore interface modes"
+git push -u origin feature/dual-interface
 ```
-
-Open a Pull Request into `main`.
-
-## Natural next extension
-
-A particularly useful semiconductor extension is to replace the fixed free-electron mass with a material-dependent effective mass `m*`.
-
-Then the same diagnostics would directly show how changing band curvature modifies:
-
-```text
-E(k)
-vg
-σx(t)
-```
-
-That would connect the simulator from generic quantum scattering to semiconductor carrier dynamics.

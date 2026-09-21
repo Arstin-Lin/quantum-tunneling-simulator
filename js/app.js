@@ -85,6 +85,7 @@ function renderCurrentState() {
 
 function renderCurrentDiagnostics() {
   if (
+    state.interfaceMode !== "explore" ||
     state.waveForm !== "packet" ||
     !packetSimulation ||
     !dispersionAnalysis

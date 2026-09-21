@@ -71,3 +71,30 @@ export const PRESETS = {
     },
   },
 };
+
+
+export const PRESENTATION_SCENARIOS = {
+  directTunneling: {
+    presetKey: "directTunneling",
+    title: "Basic quantum tunneling",
+    question: "Can an electron cross a barrier even when its central kinetic energy is below the barrier height?",
+    tryText: "Press Play, then vary E₀, V₀, and L. Compare how much probability remains on the left and appears on the right.",
+    application: "Device connection: a thin insulating or semiconductor barrier in a tunnel junction.",
+  },
+
+  aboveBarrier: {
+    presetKey: "aboveBarrier",
+    title: "Above-barrier quantum reflection",
+    question: "Does E₀ > V₀ guarantee perfect transmission?",
+    tryText: "Press Play and look for the reflected packet even though the central energy exceeds the barrier height.",
+    application: "Device connection: wave mismatch at an interface can produce reflection even without a classically forbidden region.",
+  },
+
+  resonantDoubleBarrier: {
+    presetKey: "resonantDoubleBarrier",
+    title: "Resonant tunneling",
+    question: "How can two barriers transmit almost perfectly when E < V₀?",
+    tryText: "Adjust E, barrier width L, or separation d and watch the sharp resonance disappear or return.",
+    application: "Device connection: the same principle underlies resonant-tunneling heterostructures and resonant tunneling diodes.",
+  },
+};
