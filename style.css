@@ -600,4 +600,24 @@ footer {
 .model-badges span {
   background: #ffffff !important;
 }
+/* 即時觀測量數值列（P_L, P_int, P_R）：加上純白圓角卡片 */
+.observables {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow) !important;
+  padding: 10px 18px !important;
+  margin: 10px 0 14px !important;
+  box-sizing: border-box !important;
+  align-items: center !important;
+}
+
+/* 確保裡面的文字顏色清晰 */
+.observables {
+  color: var(--muted) !important;
+}
+
+.observables strong {
+  color: var(--accent) !important;
+}
 \n\n/* v1.2 dual-interface architecture */\n.interface-switcher {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  gap: 20px;\n  margin-bottom: 12px;\n  padding: 14px 18px;\n  border: 1px solid var(--border);\n  border-radius: 14px;\n  background: #fff;\n  box-shadow: var(--shadow);\n}\n\n.interface-switcher-copy {\n  display: grid;\n  gap: 3px;\n}\n\n.interface-switcher-copy strong {\n  font-size: 1rem;\n}\n\n.interface-switcher-copy > span:last-child {\n  color: var(--muted);\n  font-size: .84rem;\n  line-height: 1.4;\n}\n\n.segmented-control {\n  display: grid;\n  grid-template-columns: repeat(2, minmax(118px, 1fr));\n  padding: 4px;\n  border: 1px solid var(--border);\n  border-radius: 11px;\n  background: var(--panel-soft);\n}\n\n.segmented-control label {\n  cursor: pointer;\n}\n\n.segmented-control input {\n  position: absolute;\n  opacity: 0;\n  pointer-events: none;\n}\n\n.segmented-control span {\n  display: block;\n  padding: 8px 12px;\n  border-radius: 8px;\n  text-align: center;\n  font-size: .86rem;\n  font-weight: 850;\n  color: var(--muted);\n}\n\n.segmented-control input:checked + span {\n  background: #fff;\n  color: var(--accent);\n  box-shadow: 0 2px 8px rgba(25,39,65,.10);\n}\n\n.segmented-control input:focus-visible + span {\n  outline: 3px solid rgba(36,87,214,.18);\n  outline-offset: 2px;\n}\n\n.presentation-guide {\n  display: grid;\n  grid-template-columns: minmax(220px, 310px) minmax(0, 1fr);\n  gap: 16px;\n  margin-bottom: 12px;\n  padding: 16px 18px;\n  border: 1px solid #cbd9ff;\n  border-radius: 14px;\n  background: linear-gradient(135deg, #ffffff 0%, #eef4ff 100%);\n  box-shadow: var(--shadow);\n}\n\n.presentation-scenario-select label {\n  display: block;\n  margin: 4px 0 7px;\n  font-weight: 800;\n}\n\n.presentation-story {\n  display: grid;\n  grid-template-columns: repeat(3, minmax(0, 1fr));\n  gap: 10px;\n}\n\n.story-card {\n  padding: 11px 12px;\n  border: 1px solid var(--border);\n  border-radius: 10px;\n  background: rgba(255,255,255,.82);\n}\n\n.story-card > span {\n  display: block;\n  margin-bottom: 5px;\n  color: var(--accent);\n  font-size: .70rem;\n  font-weight: 900;\n  letter-spacing: .07em;\n  text-transform: uppercase;\n}\n\n.story-card strong {\n  display: block;\n  margin-bottom: 5px;\n  font-size: .90rem;\n}\n\n.story-card p {\n  margin: 0;\n  color: var(--muted);\n  font-size: .80rem;\n  line-height: 1.45;\n}\n\n.application-card {\n  border-color: #d8e2c8;\n  background: #f8fbf3;\n}\n\nbody.mode-presentation .explore-only {\n  display: none !important;\n}\n\nbody.mode-explore .presentation-only {\n  display: none !important;\n}\n\nbody.mode-presentation .control-panel {\n  background: linear-gradient(180deg, #fff 0%, #fbfcff 100%);\n}\n\nbody.mode-presentation .parameter-grid {\n  grid-template-columns: repeat(4, minmax(0, 1fr));\n}\n\nbody.mode-presentation .mode-grid {\n  grid-template-columns: minmax(250px, 380px);\n}\n\nbody.mode-presentation .phase-spectrum-panel {\n  display: none !important;\n}\n\nbody.mode-presentation .domain-readout {\n  display: none;\n}\n\nbody.mode-presentation .observables {\n  justify-content: center;\n  gap: 34px;\n  padding: 4px 6px 10px;\n  color: var(--text);\n}\n\nbody.mode-presentation .observables strong {\n  color: var(--accent);\n  font-size: 1.02rem;\n}\n\n@media (max-width: 900px) {\n  .interface-switcher { align-items: stretch; flex-direction: column; }\n  .segmented-control { width: 100%; }\n  .presentation-guide { grid-template-columns: 1fr; }\n  .presentation-story { grid-template-columns: 1fr; }\n  body.mode-presentation .parameter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }\n}\n\n@media (max-width: 560px) {\n  .interface-switcher, .presentation-guide { padding: 13px; }\n  body.mode-presentation .parameter-grid { grid-template-columns: 1fr; }\n}\n
