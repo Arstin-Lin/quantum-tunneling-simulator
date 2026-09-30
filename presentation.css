@@ -1,0 +1,355 @@
+/* v1.3 Presentation Release
+   Presentation-only overrides. Explore mode deliberately keeps the v1.2 UI. */
+
+/* ---------- Presentation shell ---------- */
+body.mode-presentation {
+  --presentation-radius: 16px;
+}
+
+body.mode-presentation .page-header {
+  margin-bottom: 10px;
+  padding: 16px 20px;
+}
+
+body.mode-presentation .page-header .eyebrow {
+  margin-bottom: 3px;
+}
+
+body.mode-presentation .page-header h1 {
+  font-size: clamp(1.85rem, 3vw, 2.55rem);
+}
+
+body.mode-presentation .page-header .subtitle {
+  max-width: 760px;
+  margin-top: 6px;
+  font-size: .9rem;
+  line-height: 1.4;
+}
+
+/* Technical badges are useful in Explore, but they compete with the core story
+   during a short classroom demonstration. */
+body.mode-presentation .model-badges {
+  display: none;
+}
+
+body.mode-presentation .version-badge {
+  background: rgba(255,255,255,.88);
+}
+
+/* ---------- Mode selector ---------- */
+body.mode-presentation .interface-switcher {
+  margin-bottom: 10px;
+  padding: 10px 14px;
+  border-radius: var(--presentation-radius);
+}
+
+body.mode-presentation .interface-switcher-copy .section-kicker,
+body.mode-presentation .interface-switcher-copy > strong {
+  display: none;
+}
+
+body.mode-presentation .interface-switcher-copy > span:last-child {
+  max-width: 620px;
+  font-size: .8rem;
+}
+
+body.mode-presentation .segmented-control {
+  grid-template-columns: repeat(2, minmax(104px, 1fr));
+  flex: 0 0 auto;
+}
+
+/* ---------- Guided scenario ---------- */
+body.mode-presentation .presentation-guide {
+  grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border-radius: var(--presentation-radius);
+}
+
+body.mode-presentation .presentation-scenario-select label {
+  margin-bottom: 5px;
+  font-size: .86rem;
+}
+
+/* In presentation mode, the controls already tell the audience what to try.
+   Keep the question and application visible; hide the instruction card. */
+body.mode-presentation .presentation-story {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 8px;
+}
+
+body.mode-presentation .presentation-story .story-card:nth-child(2) {
+  display: none;
+}
+
+body.mode-presentation .story-card {
+  padding: 9px 11px;
+}
+
+body.mode-presentation .story-card p {
+  margin: 4px 0 0;
+  font-size: .82rem;
+  line-height: 1.42;
+}
+
+body.mode-presentation .story-card > span {
+  margin-bottom: 2px;
+}
+
+/* ---------- Core controls ---------- */
+body.mode-presentation .control-panel {
+  margin-bottom: 10px;
+  padding: 14px 16px;
+  border-radius: var(--presentation-radius);
+  background: rgba(255,255,255,.97);
+}
+
+body.mode-presentation .parameter-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+
+body.mode-presentation .control-group label {
+  margin-bottom: 5px;
+  font-size: .84rem;
+}
+
+body.mode-presentation input[type="range"] {
+  min-height: 22px;
+}
+
+/* Playback should feel like an action row, not another advanced settings box. */
+body.mode-presentation .mode-grid {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+body.mode-presentation .evolution-group {
+  width: auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.mode-presentation .evolution-group legend {
+  display: none;
+}
+
+body.mode-presentation .evolution-group .button-row {
+  margin: 0;
+}
+
+body.mode-presentation #packet-play {
+  min-width: 96px;
+}
+
+body.mode-presentation .time-readout {
+  display: inline-block;
+  margin: 0 0 0 8px;
+  font-size: .82rem;
+  color: var(--muted);
+}
+
+/* ---------- Scattering readout ---------- */
+body.mode-presentation .observables {
+  justify-content: center;
+  gap: 10px;
+  margin: 8px 0 10px;
+  padding: 8px 10px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+body.mode-presentation .observables > span {
+  min-width: 150px;
+  padding: 9px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 5px 16px rgba(25,39,65,.06);
+  text-align: center;
+  font-weight: 750;
+}
+
+body.mode-presentation .observables strong {
+  margin-left: 4px;
+  font-size: 1.08rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Presentation panel chooser ---------- */
+.presentation-panel-switcher {
+  display: none;
+}
+
+body.mode-presentation .presentation-panel-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 9px 14px;
+  margin: 0 0 10px;
+  padding: 9px 11px;
+  border: 1px solid rgba(215,222,231,.92);
+  border-radius: 12px;
+  background: rgba(255,255,255,.90);
+  box-shadow: 0 5px 16px rgba(25,39,65,.05);
+}
+
+.presentation-panel-switcher .panel-switcher-label {
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.presentation-panel-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.presentation-panel-toggle {
+  min-height: 32px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255,255,255,.98);
+  color: var(--muted);
+  box-shadow: none;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.presentation-panel-toggle:hover {
+  filter: none;
+  border-color: #a9bdec;
+}
+
+.presentation-panel-toggle[aria-pressed="true"] {
+  border-color: #aec1f2;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* A closed panel leaves no card, plot height, margin, or gap behind. */
+body.mode-presentation .viz-card.presentation-panel-hidden {
+  display: none !important;
+}
+
+/* Default first frame: the mathematical wavefunction is secondary to the
+   potential and measurable probability density. JS mirrors this state. */
+body.mode-presentation.presentation-ui-pending .visualization-stack > .viz-card:nth-child(2) {
+  display: none !important;
+}
+
+/* ---------- Core visualizations ---------- */
+body.mode-presentation .visualization-stack {
+  gap: 10px;
+}
+
+body.mode-presentation .viz-card {
+  padding: 11px 12px 2px;
+  border-radius: var(--presentation-radius);
+  background: rgba(255,255,255,.97);
+}
+
+body.mode-presentation .viz-heading {
+  padding-bottom: 0;
+}
+
+body.mode-presentation .viz-heading h2 {
+  font-size: .94rem;
+}
+
+body.mode-presentation .panel-index {
+  font-size: .68rem;
+}
+
+body.mode-presentation .equation-tag {
+  font-size: .9rem;
+}
+
+body.mode-presentation .energy-plot {
+  height: 230px;
+}
+
+body.mode-presentation .wavefunction-plot {
+  height: 300px;
+}
+
+body.mode-presentation .probability-plot {
+  height: 250px;
+}
+
+/* Explore mode stays intentionally untouched except that the dynamically
+   injected chooser is hidden and every physics card is visible. */
+body.mode-explore .presentation-panel-switcher {
+  display: none !important;
+}
+
+body.mode-explore .viz-card.presentation-panel-hidden {
+  display: block !important;
+}
+
+/* ---------- Projector / narrow-screen behavior ---------- */
+@media (max-width: 900px) {
+  body.mode-presentation .presentation-guide {
+    grid-template-columns: 1fr;
+  }
+
+  body.mode-presentation .presentation-story {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  body.mode-presentation .parameter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  body.mode-presentation .page-header,
+  body.mode-presentation .interface-switcher,
+  body.mode-presentation .presentation-guide,
+  body.mode-presentation .control-panel {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  body.mode-presentation .interface-switcher-copy {
+    display: none;
+  }
+
+  body.mode-presentation .segmented-control {
+    width: 100%;
+  }
+
+  body.mode-presentation .presentation-story {
+    grid-template-columns: 1fr;
+  }
+
+  body.mode-presentation .presentation-story .application-card {
+    display: none;
+  }
+
+  body.mode-presentation .parameter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body.mode-presentation .presentation-panel-switcher {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  body.mode-presentation .observables > span {
+    flex: 1 1 130px;
+    min-width: 0;
+  }
+}
