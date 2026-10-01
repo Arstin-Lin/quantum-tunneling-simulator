@@ -244,12 +244,6 @@ body.mode-presentation .viz-card.presentation-panel-hidden {
   display: none !important;
 }
 
-/* Default first frame: the mathematical wavefunction is secondary to the
-   potential and measurable probability density. JS mirrors this state. */
-body.mode-presentation.presentation-ui-pending .visualization-stack > .viz-card:nth-child(2) {
-  display: none !important;
-}
-
 /* ---------- Core visualizations ---------- */
 body.mode-presentation .visualization-stack {
   gap: 10px;

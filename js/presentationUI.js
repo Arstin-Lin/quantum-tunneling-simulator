@@ -12,7 +12,7 @@ const PANEL_CONFIG = [
     key: "wavefunction",
     label: "Wavefunction",
     selector: "#wavefunction-plot",
-    defaultOpen: false,
+    defaultOpen: true,
   },
   {
     key: "probability",
