@@ -13,6 +13,12 @@ const initialized = {
   dispersionRelation: false,
 };
 
+// Plotly.react() is asynchronous. During wave-packet playback the animation
+// loop can request another update before the previous one has completed.
+// Keep at most one update in flight for each plot to avoid overlapping
+// render cycles and transient DOM/layout corruption.
+const plotUpdateInFlight = new Set();
+
 function timeRotate(z, phase) {
   return mul(z, expI(-phase));
 }
@@ -694,10 +700,18 @@ function updateDispersionMetricReadouts(metrics) {
 }
 
 function renderDispersionHistory(analysis) {
+  // Snapshot the live analysis arrays. The propagator continues appending to
+  // the originals between display frames, so Plotly should receive an
+  // immutable view of one diagnostic instant.
+  const timeFS = analysis.timeFS.slice();
+  const meanXNM = analysis.meanXNM.slice();
+  const sigmaXNM = analysis.sigmaXNM.slice();
+  const freeSigmaXNM = analysis.freeSigmaXNM.slice();
+
   const traces = [
     {
-      x: analysis.timeFS,
-      y: analysis.meanXNM,
+      x: timeFS,
+      y: meanXNM,
       type: "scatter",
       mode: "lines",
       name: "⟨x⟩",
@@ -705,8 +719,8 @@ function renderDispersionHistory(analysis) {
       hovertemplate: "t=%{x:.3f} fs<br>⟨x⟩=%{y:.4f} nm<extra></extra>",
     },
     {
-      x: analysis.timeFS,
-      y: analysis.sigmaXNM,
+      x: timeFS,
+      y: sigmaXNM,
       type: "scatter",
       mode: "lines",
       name: "σx",
@@ -715,8 +729,8 @@ function renderDispersionHistory(analysis) {
       hovertemplate: "t=%{x:.3f} fs<br>σx=%{y:.4f} nm<extra></extra>",
     },
     {
-      x: analysis.timeFS,
-      y: analysis.freeSigmaXNM,
+      x: timeFS,
+      y: freeSigmaXNM,
       type: "scatter",
       mode: "lines",
       name: "free σx",
@@ -731,7 +745,7 @@ function renderDispersionHistory(analysis) {
     "dispersionHistory",
     traces,
     {
-      datarevision: analysis.timeFS.length,
+      datarevision: timeFS.length,
       xaxis: {
         title: "Time t (fs)",
         zeroline: false,
@@ -759,14 +773,16 @@ function renderDispersionHistory(analysis) {
 
 function renderMomentumSpectrum(analysis) {
   const spectrum = analysis.spectrum;
+  const kSnapshot = Array.from(spectrum.k);
+  const densitySnapshot = Array.from(spectrum.density);
 
   drawPlot(
     "momentum-spectrum-plot",
     "momentumSpectrum",
     [
       {
-        x: spectrum.k,
-        y: spectrum.density,
+        x: kSnapshot,
+        y: densitySnapshot,
         type: "scatter",
         mode: "lines",
         name: "|ψ̃(k)|²",
@@ -901,10 +917,35 @@ function drawPlot(elementId, key, traces, layout) {
     modeBarButtonsToRemove: ["select2d", "lasso2d"],
   };
 
-  if (!initialized[key]) {
-    Plotly.newPlot(elementId, traces, layout, config);
-    initialized[key] = true;
-  } else {
-    Plotly.react(elementId, traces, layout, config);
+  // Drop a display frame if this plot is still finishing the previous
+  // Plotly update. Physics propagation continues normally; only redundant
+  // rendering work is skipped.
+  if (plotUpdateInFlight.has(key)) {
+    return;
   }
+
+  plotUpdateInFlight.add(key);
+
+  let updatePromise;
+
+  try {
+    if (!initialized[key]) {
+      initialized[key] = true;
+      updatePromise = Plotly.newPlot(elementId, traces, layout, config);
+    } else {
+      updatePromise = Plotly.react(elementId, traces, layout, config);
+    }
+  } catch (error) {
+    plotUpdateInFlight.delete(key);
+    console.error(`Plotly update failed for ${key}:`, error);
+    return;
+  }
+
+  Promise.resolve(updatePromise)
+    .catch((error) => {
+      console.error(`Plotly update failed for ${key}:`, error);
+    })
+    .finally(() => {
+      plotUpdateInFlight.delete(key);
+    });
 }

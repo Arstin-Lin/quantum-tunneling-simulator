@@ -158,7 +158,7 @@ renderCurrentDiagnostics();
 // momentum-space transform and dispersion plots are intentionally refreshed
 // at a lower rate so analysis does not slow the propagator.
 const DISPLAY_INTERVAL_MS = 50;
-const DIAGNOSTIC_INTERVAL_MS = 220;
+const DIAGNOSTIC_INTERVAL_MS = 400;
 let lastDisplayTime = 0;
 let lastDiagnosticTime = 0;
 
