@@ -30,6 +30,19 @@ export const PRESETS = {
       sigmaNM: 0.65,
     },
   },
+    
+  stationaryTunneling: {
+    description:
+      "A definite-energy electron scatters from a single barrier with E < V₀, producing an evanescent wave inside the classically forbidden region.",
+    waveForm: "plane",
+    energyEV: 5.0,
+    potential: {
+      type: "barrier",
+      heightEV: 10.0,
+      widthNM: 0.3,
+      spacingNM: 1.0,
+    },
+  },
 
   aboveBarrier: {
     description: "Quantum reflection remains possible even when E₀ exceeds the barrier height.",
@@ -80,6 +93,17 @@ export const PRESENTATION_SCENARIOS = {
     question: "Can an electron cross a barrier even when its central kinetic energy is below the barrier height?",
     tryText: "Press Play, then vary E₀, V₀, and L. Compare how much probability remains on the left and appears on the right.",
     application: "Device connection: a thin insulating or semiconductor barrier in a tunnel junction.",
+  },
+
+  stationaryTunneling: {
+    presetKey: "stationaryTunneling",
+    title: "Stationary tunneling · exponential decay",
+    question:
+      "What happens to a definite-energy electron wave when E < V₀?",
+    tryText:
+      "Compare the oscillatory wave outside the barrier with its evanescent behavior inside. Increase V₀ or L and watch the transmission decrease.",
+    application:
+      "Inside a classically forbidden barrier, the wavefunction is evanescent rather than zero; this exponential suppression is the basis of quantum tunneling.",
   },
 
   aboveBarrier: {
