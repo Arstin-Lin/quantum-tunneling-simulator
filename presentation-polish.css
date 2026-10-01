@@ -14,10 +14,10 @@ body.mode-presentation {
   --presentation-shadow: 0 18px 48px rgba(25, 39, 65, 0.10);
 
   min-height: 100vh;
-  background-image:
-    linear-gradient(rgba(244, 247, 252, 0.90), rgba(244, 247, 252, 0.96)),
-    url('image/tunnel.jpeg');
+  background-color: #07111f;
+  background-image: url('image/quantum-tunnel-bg.png');
   background-size: cover;
+
   background-position: center;
   background-attachment: fixed;
   color: var(--presentation-ink);
